@@ -12,8 +12,9 @@
 
 set -euo pipefail
 
-export TMPDIR="${TMPDIR:-/tmp}"
-mkdir -p "${TMPDIR}"
+# Double braces: Snakemake treats {{ as literal { in the submitted script.
+export TMPDIR="${{TMPDIR:-/tmp}}"
+mkdir -p "${{TMPDIR}}"
 
 hostname
 which python
