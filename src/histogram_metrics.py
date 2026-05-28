@@ -6,6 +6,8 @@ from typing import Any
 
 import numpy as np
 
+from src.config import EV_PER_KCAL
+
 # Keys returned by mmml.physnetjax plot_stats (physnetjax/analysis/analysis.py).
 PLOT_STATS_ENERGY_KEYS = ("predEs", "E_pred", "E_preds", "E_hat", "E_model", "pred_E")
 PLOT_STATS_FORCE_KEYS = ("predFs", "F_pred", "F_preds", "F_hat", "F_model", "pred_F")
@@ -40,6 +42,25 @@ def compute_normalized_histogram(
     if denom <= 0.0:
         return np.full_like(hist, 1.0 / len(hist), dtype=float), edges
     return hist / denom, edges
+
+
+def plot_stats_arrays_to_dataset_units(
+    e_pred: np.ndarray,
+    f_pred: np.ndarray,
+    *,
+    e_source: str,
+    f_source: str,
+    convert_to_ev: bool,
+) -> tuple[np.ndarray, np.ndarray]:
+    """plot_stats returns kcal/mol; RMD17 loaders use eV when convert_to_ev is set."""
+    e_out = np.asarray(e_pred, dtype=float)
+    f_out = np.asarray(f_pred, dtype=float)
+    if convert_to_ev:
+        if e_source != "fallback_ground_truth":
+            e_out = e_out * EV_PER_KCAL
+        if f_source != "fallback_ground_truth":
+            f_out = f_out * EV_PER_KCAL
+    return e_out, f_out
 
 
 def kl_divergence(p: np.ndarray, q: np.ndarray, eps: float = 1e-12) -> float:

@@ -47,6 +47,7 @@ from src.histogram_metrics import (
     compute_normalized_histogram,
     extract_array_with_fallback,
     kl_divergence,
+    plot_stats_arrays_to_dataset_units,
 )
 
 patch_chemcoord_for_pandas3()
@@ -296,6 +297,7 @@ def teacher_predict_dataset(
     num_atoms: int,
     seed: int,
     set_name: str,
+    convert_to_ev: bool = True,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     key_eval, _ = jax.random.split(jax.random.PRNGKey(seed))
     batches = prepare_batches_jit(
@@ -331,10 +333,21 @@ def teacher_predict_dataset(
             f"WARNING [{set_name}]: plot_stats missing model predictions "
             f"(energy={e_source}, forces={f_source}); distillation/KL metrics use ground truth."
         )
+    e_pred, f_pred = plot_stats_arrays_to_dataset_units(
+        e_pred,
+        f_pred,
+        e_source=e_source,
+        f_source=f_source,
+        convert_to_ev=convert_to_ev,
+    )
     distill_data = {k: np.copy(v) if isinstance(v, np.ndarray) else v for k, v in dataset.items()}
     distill_data["E"] = e_pred
     distill_data["F"] = f_pred
-    return distill_data, {"energy_source": e_source, "forces_source": f_source}
+    return distill_data, {
+        "energy_source": e_source,
+        "forces_source": f_source,
+        "units": "eV_eV_per_A" if convert_to_ev else "kcal_mol_kcal_per_mol_A",
+    }
 
 
 def build_model(model_cfg: ModelConfig, data: dict[str, Any], num_atoms: int) -> EF:
@@ -703,6 +716,7 @@ def train_one_experiment(
         num_atoms=num_atoms,
         seed=selection.seed + 2,
         set_name=f"Teacher train reevaluation | {run_name}",
+        convert_to_ev=config.dataset.convert_to_ev,
     )
     teacher_valid_targets, teacher_valid_meta = teacher_predict_dataset(
         model=model,
@@ -712,6 +726,7 @@ def train_one_experiment(
         num_atoms=num_atoms,
         seed=selection.seed + 3,
         set_name=f"Teacher valid reevaluation | {run_name}",
+        convert_to_ev=config.dataset.convert_to_ev,
     )
     np.savez(
         run_output_dir / "teacher_distillation_targets.npz",
@@ -772,6 +787,7 @@ def train_one_experiment(
         num_atoms=num_atoms,
         seed=selection.seed + 4,
         set_name=f"Teacher test reevaluation | {run_name}",
+        convert_to_ev=config.dataset.convert_to_ev,
     )
     student_test_pred, student_test_meta = teacher_predict_dataset(
         model=student_model,
@@ -781,6 +797,7 @@ def train_one_experiment(
         num_atoms=num_atoms,
         seed=selection.seed + 1002,
         set_name=f"Student test reevaluation | {student_run_name}",
+        convert_to_ev=config.dataset.convert_to_ev,
     )
     teacher_force = np.asarray(teacher_test_pred["F"]).reshape(-1)
     student_force = np.asarray(student_test_pred["F"]).reshape(-1)
