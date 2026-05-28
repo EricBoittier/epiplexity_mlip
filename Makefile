@@ -3,7 +3,7 @@ VENV_DIR ?= .venv
 VENV_PYTHON := $(VENV_DIR)/bin/python
 VENV_PIP := $(VENV_DIR)/bin/pip
 
-.PHONY: snakemake-setup snakemake-dryrun snakemake-run
+.PHONY: snakemake-setup snakemake-dryrun snakemake-run plot-setup plot-results
 
 snakemake-setup:
 	@if command -v uv >/dev/null 2>&1; then \
@@ -23,3 +23,11 @@ snakemake-dryrun:
 
 snakemake-run:
 	$(VENV_DIR)/bin/snakemake -j 2
+
+plot-setup:
+	$(PYTHON) -m venv $(VENV_DIR)
+	$(VENV_PIP) install --upgrade pip
+	$(VENV_PIP) install -r requirements-plot.txt
+
+plot-results: plot-setup
+	$(VENV_PYTHON) -m src.plot_experiment_results

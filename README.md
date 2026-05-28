@@ -18,6 +18,13 @@ teacher training, Gaussian noise is added to train/valid energies and forces wit
 `std_noise = scale * std(labels)` computed separately for each split and quantity.
 Set `teacher_noise.enabled: false` to run only the baseline matrix.
 
+Plot aggregated results (after `experiment_results.json` exists):
+
+- `make plot-results`
+- Or: `.venv/bin/python -m src.plot_experiment_results --results-json checkpoints/rmd17_aspirin/experiment_results.json`
+
+Figures are written to `checkpoints/rmd17_aspirin/plots/` (force RMSE, KL divergences, sample force histograms, plus a CSV summary).
+
 Useful commands:
 - Run one target only (example):
   - `snakemake checkpoints/rmd17_aspirin/experiment_results.json -j 1`

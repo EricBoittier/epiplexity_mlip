@@ -1,3 +1,3 @@
-from src.main import main
+"""Experiment pipeline package."""
 
-__all__ = ["main"]
+__all__: list[str] = []
