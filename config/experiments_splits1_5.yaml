@@ -7,7 +7,7 @@ execution:
 dataset:
   data_path: /scicore/home/meuwly/boitti0000/data/rmd17/npz_data/rmd17_aspirin.npz
   splits_dir: ""
-  split_ids: [2, 3, 4, 5]
+  split_ids: [1, 2, 3, 4, 5]
   max_structures: null
   convert_to_ev: true
 
