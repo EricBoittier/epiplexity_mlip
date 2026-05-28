@@ -35,3 +35,25 @@ Manual equivalent:
 - `.venv/bin/pip install -r requirements-snakemake.txt`
 - `.venv/bin/snakemake -n`
 - `.venv/bin/snakemake -j 2`
+
+## Run on SciCORE Slurm
+
+This repository includes a Snakemake profile at `profiles/scicore/` with Slurm headers matching your template:
+
+- `--job-name=GPU_JOB`
+- `--time=01:00:00`
+- `--qos=gpu6hours`
+- `--mem-per-cpu=20G`
+- `--ntasks=1`
+- `--cpus-per-task=2`
+- `--partition=rtx4090`
+- `--gres=gpu:1`
+
+Run:
+
+- `.venv/bin/snakemake --profile profiles/scicore`
+
+Notes:
+
+- The `#SBATCH --array=0-999` line is intentionally not included in the jobscript. Snakemake already submits one Slurm job per workflow job; combining that with a fixed array would create unintended duplicate tasks.
+- Logs go to `logs/slurm/`.

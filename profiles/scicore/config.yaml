@@ -1,0 +1,9 @@
+jobs: 50
+latency-wait: 60
+printshellcmds: true
+keep-going: true
+rerun-incomplete: true
+
+# Submit each Snakemake job to Slurm.
+cluster: "sbatch"
+jobscript: "profiles/scicore/jobscript.sh"
