@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -67,7 +68,8 @@ def build_config_from_args(args: argparse.Namespace, selection: SelectionConfig)
         n_valid=args.n_valid,
         energy_weight=args.energy_weight,
         forces_weight=args.forces_weight,
-        save_every_epoch=bool(args.save_every_epoch),
+        save_every_epoch=_parse_save_every_epoch_arg(args.save_every_epoch),
+        save_every_n_epochs=args.save_every_n_epochs,
         log_tb=bool(args.log_tb),
         print_freq=args.print_freq,
         ckpt_root=Path(args.ckpt_root).resolve(),
@@ -88,11 +90,13 @@ def build_config_from_args(args: argparse.Namespace, selection: SelectionConfig)
             run_suffix=args.teacher_noise_suffix,
         )
 
+    teacher_model_cfg = replace(base.model, cutoff=float(args.teacher_cutoff))
+
     return ExperimentConfig(
         molecule=args.molecule,
         dataset=dataset_cfg,
         training=training_cfg,
-        model=base.model,
+        model=teacher_model_cfg,
         student_model=student_model_cfg,
         student_epochs=args.student_epochs,
         student_learning_rate=args.student_learning_rate,
@@ -102,6 +106,10 @@ def build_config_from_args(args: argparse.Namespace, selection: SelectionConfig)
 
 
 def _bool_arg(value: str) -> bool:
+    return str(value).lower() in {"1", "true", "yes", "y", "on"}
+
+
+def _parse_save_every_epoch_arg(value: str) -> bool:
     return str(value).lower() in {"1", "true", "yes", "y", "on"}
 
 
@@ -186,7 +194,14 @@ def parse_args() -> argparse.Namespace:
     run_parser.add_argument("--n-valid", type=int, default=50)
     run_parser.add_argument("--energy-weight", type=float, default=1.0)
     run_parser.add_argument("--forces-weight", type=float, default=52.91)
-    run_parser.add_argument("--save-every-epoch", type=_bool_arg, default=True)
+    run_parser.add_argument("--save-every-epoch", type=_parse_save_every_epoch_arg, default=True)
+    run_parser.add_argument(
+        "--save-every-n-epochs",
+        type=int,
+        default=None,
+        help="If set, checkpoint every N epochs (passed to train_model.save_every_epoch).",
+    )
+    run_parser.add_argument("--teacher-cutoff", type=float, default=10.0)
     run_parser.add_argument("--log-tb", type=_bool_arg, default=False)
     run_parser.add_argument("--print-freq", type=int, default=1)
 

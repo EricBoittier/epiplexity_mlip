@@ -12,6 +12,9 @@
 
 set -euo pipefail
 
+export TMPDIR="${TMPDIR:-/tmp}"
+mkdir -p "${TMPDIR}"
+
 hostname
 which python
 

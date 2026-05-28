@@ -1,14 +1,13 @@
-# SciCORE: splits 1–5 on lab storage (NOT $HOME).
+# SciCORE: splits 1–5; checkpoints on node /tmp (large, not counted against $HOME).
 #
-# 1) Find a writable directory:
-#      bash scripts/scicore_find_lab_root.sh
-# 2) Set SCICORE_LAB_ROOT to that path + /epiplexity/rmd17_aspirin_splits1_5
-# 3) Replace __SCICORE_LAB_ROOT__ below with that full path (all 3 occurrences).
-# 4) source scripts/scicore_use_lab_storage.sh
-# 5) snakemake --profile profiles/scicore --configfile config/experiments_splits1_5_scicore.yaml
+# On the login node before snakemake:
+#   mkdir -p /tmp/epiplexity_mlip/rmd17_aspirin_splits1_5/checkpoints
+#   cd ~/epiplexity
+#   export TMPDIR=/tmp
+#   snakemake --profile profiles/scicore --configfile config/experiments_splits1_5_scicore.yaml
 #
-# Example (only if scripts/scicore_find_lab_root.sh marks it WRITABLE):
-#   /scicore/home/meuwly/boitti0000/GROUP/epiplexity/rmd17_aspirin_splits1_5
+# Note: /tmp is per compute node and may be cleared when the job ends. Copy
+# experiment_metadata/ and experiment_results.json to lab storage if you need them later.
 
 molecule: rmd17_aspirin
 
@@ -23,8 +22,11 @@ dataset:
   max_structures: null
   convert_to_ev: true
 
+model:
+  cutoff: 12.0
+
 training:
-  ckpt_root: __SCICORE_LAB_ROOT__/checkpoints
+  ckpt_root: /tmp/epiplexity_mlip/rmd17_aspirin_splits1_5/checkpoints
   num_epochs: 1000
   batch_size: 50
   learning_rate: 0.001
@@ -33,6 +35,7 @@ training:
   energy_weight: 1.0
   forces_weight: 52.91
   save_every_epoch: false
+  save_every_n_epochs: 50
   log_tb: false
   print_freq: 1
 
@@ -44,7 +47,7 @@ student:
     max_degree: 0
     num_iterations: 2
     num_basis_functions: 16
-    cutoff: 10.0
+    cutoff: 12.0
     charges: false
     zbl: false
 
@@ -56,8 +59,8 @@ selection_matrix:
   train_fraction: 0.95
 
 outputs:
-  aggregate_results_json: __SCICORE_LAB_ROOT__/checkpoints/experiment_results.json
-  snakemake_done_dir: __SCICORE_LAB_ROOT__/checkpoints/snakemake_done
+  aggregate_results_json: /tmp/epiplexity_mlip/rmd17_aspirin_splits1_5/checkpoints/experiment_results.json
+  snakemake_done_dir: /tmp/epiplexity_mlip/rmd17_aspirin_splits1_5/checkpoints/snakemake_done
 
 teacher_noise:
   enabled: false

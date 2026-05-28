@@ -27,9 +27,17 @@ class TrainingConfig:
     energy_weight: float = 1.0
     forces_weight: float = 52.91
     save_every_epoch: bool = True
+    save_every_n_epochs: int | None = None
     log_tb: bool = False
     print_freq: int = 1
     ckpt_root: Path = Path("checkpoints/rmd17_aspirin")
+
+
+def resolve_save_every_epoch(training: TrainingConfig) -> bool | int:
+    """Value passed to mmml train_model.save_every_epoch (bool or epoch interval)."""
+    if training.save_every_n_epochs is not None:
+        return int(training.save_every_n_epochs)
+    return training.save_every_epoch
 
 
 @dataclass(frozen=True)

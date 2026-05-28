@@ -91,6 +91,7 @@ rule run_selection:
         energy_weight=config["training"]["energy_weight"],
         forces_weight=config["training"]["forces_weight"],
         save_every_epoch=config["training"]["save_every_epoch"],
+        teacher_cutoff=config.get("model", {}).get("cutoff", 10.0),
         log_tb=config["training"]["log_tb"],
         print_freq=config["training"]["print_freq"],
         student_epochs=config["student"]["epochs"],
@@ -116,6 +117,11 @@ rule run_selection:
             if RUN_TO_META[wc.run_name]["teacher_noise_suffix"]
             else ""
         ),
+        save_every_n_epochs_cmd=lambda wc: (
+            f"--save-every-n-epochs {int(config['training']['save_every_n_epochs'])}"
+            if config["training"].get("save_every_n_epochs") not in (None, "", False)
+            else ""
+        ),
     wildcard_constraints:
         run_name="|".join(RUN_NAMES),
     shell:
@@ -137,6 +143,8 @@ rule run_selection:
             "--energy-weight {params.energy_weight} "
             "--forces-weight {params.forces_weight} "
             "--save-every-epoch {params.save_every_epoch} "
+            "{params.save_every_n_epochs_cmd} "
+            "--teacher-cutoff {params.teacher_cutoff} "
             "--log-tb {params.log_tb} "
             "--print-freq {params.print_freq} "
             "--student-epochs {params.student_epochs} "

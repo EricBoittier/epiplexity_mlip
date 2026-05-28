@@ -40,6 +40,7 @@ from src.config import (
     SoapConfig,
     TeacherNoiseConfig,
     TrainingConfig,
+    resolve_save_every_epoch,
 )
 from src.histogram_metrics import (
     PLOT_STATS_ENERGY_KEYS,
@@ -689,7 +690,7 @@ def train_one_experiment(
             name=run_name,
             ckpt_dir=config.training.ckpt_root,
             best=True,
-            save_every_epoch=config.training.save_every_epoch,
+            save_every_epoch=resolve_save_every_epoch(config.training),
             batch_method="default",
             log_tb=config.training.log_tb,
             print_freq=config.training.print_freq,
@@ -760,7 +761,7 @@ def train_one_experiment(
             name=student_run_name,
             ckpt_dir=config.training.ckpt_root,
             best=True,
-            save_every_epoch=config.training.save_every_epoch,
+            save_every_epoch=resolve_save_every_epoch(config.training),
             batch_method="default",
             log_tb=config.training.log_tb,
             print_freq=config.training.print_freq,

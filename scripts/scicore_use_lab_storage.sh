@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
-# Point Snakemake metadata and temp files at lab storage (not $HOME).
+# Point Snakemake metadata and temp files at lab storage or /tmp (not $HOME).
 #
-# Recommended (won't close SSH if you use set -e in .bashrc):
+# Checkpoints on node /tmp (see config/experiments_splits1_5_scicore.yaml):
+#   export TMPDIR=/tmp
+#   snakemake --profile profiles/scicore --configfile config/experiments_splits1_5_scicore.yaml
+#
+# Lab storage + generated config (legacy):
 #   export SCICORE_LAB_ROOT=/scicore/home/meuwly/boitti0000/epiplexity_storage/rmd17_aspirin_splits1_5
 #   bash scripts/scicore_use_lab_storage.sh
 #   source .scicore_lab_env
@@ -42,6 +46,7 @@ _resolve_lab_root() {
     return 0
   fi
   local candidates=(
+    "/tmp/epiplexity_mlip/rmd17_aspirin_splits1_5"
     "/scicore/home/meuwly/${USER}/epiplexity_storage/rmd17_aspirin_splits1_5"
     "/scicore/home/meuwly/${USER}/GROUP/epiplexity/rmd17_aspirin_splits1_5"
     "/scicore/home/meuwly/${USER}/group/epiplexity/rmd17_aspirin_splits1_5"
@@ -71,7 +76,7 @@ _main() {
   _relocate_to_symlink ".snakemake" "${LAB_ROOT}/snakemake/.snakemake" || rc=1
   _relocate_to_symlink "logs/slurm" "${LAB_ROOT}/logs/slurm" || rc=1
 
-  export TMPDIR="${LAB_ROOT}/tmp"
+  export TMPDIR="/tmp"
   export GENERATED_CONFIG="config/experiments_splits1_5_scicore.generated.yaml"
   sed "s|__SCICORE_LAB_ROOT__|${SCICORE_LAB_ROOT}|g" \
     config/experiments_splits1_5_scicore.yaml > "${GENERATED_CONFIG}"
