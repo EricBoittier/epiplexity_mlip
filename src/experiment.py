@@ -340,6 +340,73 @@ def latest_run_dir(ckpt_root: Path, run_name: str) -> Path | None:
     return run_dirs[-1] if run_dirs else None
 
 
+def latest_epoch_checkpoint(run_ckpt_dir: Path) -> Path | None:
+    """Return the latest epoch checkpoint directory inside a run directory."""
+    epoch_dirs = [p for p in run_ckpt_dir.glob("epoch-*") if p.is_dir()]
+    if not epoch_dirs:
+        return None
+
+    def epoch_from_path(path: Path) -> int:
+        try:
+            return int(path.name.split("-", 1)[1])
+        except (IndexError, ValueError):
+            return -1
+
+    epoch_dirs = sorted(epoch_dirs, key=epoch_from_path)
+    return epoch_dirs[-1]
+
+
+def maybe_resume_ema_params(run_ckpt_dir: Path | None) -> tuple[Any | None, float | None]:
+    """Restore EMA params and best loss from latest checkpoint if possible."""
+    if run_ckpt_dir is None:
+        return None, None
+
+    latest_epoch = latest_epoch_checkpoint(run_ckpt_dir)
+    if latest_epoch is None:
+        return None, None
+
+    restored = orbax.checkpoint.PyTreeCheckpointer().restore(latest_epoch.resolve())
+    ema_params = (
+        restored.get("ema_params")
+        or restored.get("params_ema")
+        or restored.get("best_params")
+        or restored.get("params")
+    )
+    if ema_params is None:
+        return None, None
+
+    best_loss_val = restored.get("best_loss")
+    best_loss = float(best_loss_val) if best_loss_val is not None else float("nan")
+    return ema_params, best_loss
+
+
+def _resume_signature(
+    *,
+    config: ExperimentConfig,
+    selection: SelectionConfig,
+    splits_dir: Path,
+    num_atoms: int,
+) -> dict[str, Any]:
+    return {
+        "molecule": config.molecule,
+        "dataset": {
+            "data_path": str(config.dataset.data_path),
+            "rmd17_splits_dir": str(config.dataset.rmd17_splits_dir) if config.dataset.rmd17_splits_dir else None,
+            "split_id": int(config.dataset.split_id),
+            "max_structures": config.dataset.max_structures,
+            "convert_to_ev": bool(config.dataset.convert_to_ev),
+            "resolved_splits_dir": str(splits_dir),
+        },
+        "selection": asdict(selection),
+        "training": asdict(config.training),
+        "model": asdict(config.model),
+        "student_model": asdict(config.student_model),
+        "student_epochs": int(config.student_epochs),
+        "student_learning_rate": float(config.student_learning_rate),
+        "num_atoms": int(num_atoms),
+    }
+
+
 def evaluate_test_set(
     *,
     model: EF,
@@ -484,9 +551,32 @@ def train_one_experiment(
     run_output_dir = config.training.ckpt_root / "experiment_metadata" / run_name
     run_output_dir.mkdir(parents=True, exist_ok=True)
     result_summary_path = run_output_dir / "result_summary.json"
+    resume_signature_path = run_output_dir / "resume_signature.json"
+    current_signature = _resume_signature(
+        config=config,
+        selection=selection,
+        splits_dir=splits_dir,
+        num_atoms=num_atoms,
+    )
+    if resume and resume_signature_path.exists():
+        with open(resume_signature_path) as f:
+            existing_signature = json.load(f)
+        if existing_signature != current_signature:
+            raise ValueError(
+                "Resume safety check failed: existing run signature does not match current settings. "
+                "Disable resume for this run or use a different checkpoint root."
+            )
+    if resume and not resume_signature_path.exists():
+        raise ValueError(
+            "Resume safety check failed: missing resume_signature.json for this run. "
+            "To avoid mixing incompatible settings, rerun with resume disabled once, "
+            "or start from a clean checkpoint root."
+        )
     if resume and result_summary_path.exists():
         with open(result_summary_path) as f:
             return json.load(f)
+    with open(resume_signature_path, "w") as f:
+        json.dump(current_signature, f, indent=2, default=str)
     train_data, valid_data, selection_metadata = make_selected_data(
         official_train_pool_data, selection, config.training
     )
@@ -513,26 +603,31 @@ def train_one_experiment(
         )
     key = jax.random.PRNGKey(selection.seed)
     model = build_model(config.model, data, num_atoms)
-    ema_params, best_loss = train_model(
-        key=key,
-        model=model,
-        train_data=train_data,
-        valid_data=valid_data,
-        num_epochs=config.training.num_epochs,
-        learning_rate=config.training.learning_rate,
-        batch_size=config.training.batch_size,
-        num_atoms=num_atoms,
-        energy_weight=config.training.energy_weight,
-        forces_weight=config.training.forces_weight,
-        data_keys=("R", "Z", "F", "E", "N"),
-        name=run_name,
-        ckpt_dir=config.training.ckpt_root,
-        best=True,
-        save_every_epoch=config.training.save_every_epoch,
-        batch_method="default",
-        log_tb=config.training.log_tb,
-        print_freq=config.training.print_freq,
-    )
+    run_ckpt_dir = latest_run_dir(config.training.ckpt_root, run_name)
+    ema_params, best_loss = (None, None)
+    if resume:
+        ema_params, best_loss = maybe_resume_ema_params(run_ckpt_dir)
+    if ema_params is None:
+        ema_params, best_loss = train_model(
+            key=key,
+            model=model,
+            train_data=train_data,
+            valid_data=valid_data,
+            num_epochs=config.training.num_epochs,
+            learning_rate=config.training.learning_rate,
+            batch_size=config.training.batch_size,
+            num_atoms=num_atoms,
+            energy_weight=config.training.energy_weight,
+            forces_weight=config.training.forces_weight,
+            data_keys=("R", "Z", "F", "E", "N"),
+            name=run_name,
+            ckpt_dir=config.training.ckpt_root,
+            best=True,
+            save_every_epoch=config.training.save_every_epoch,
+            batch_method="default",
+            log_tb=config.training.log_tb,
+            print_freq=config.training.print_freq,
+        )
     run_ckpt_dir = latest_run_dir(config.training.ckpt_root, run_name)
     teacher_metrics = evaluate_test_set(
         model=model,
@@ -577,26 +672,31 @@ def train_one_experiment(
     student_run_name = f"{run_name}_student"
     student_key = jax.random.PRNGKey(selection.seed + 1000)
     student_model = build_model(config.student_model, data, num_atoms)
-    student_ema_params, student_best_loss = train_model(
-        key=student_key,
-        model=student_model,
-        train_data=teacher_train_targets,
-        valid_data=teacher_valid_targets,
-        num_epochs=config.student_epochs,
-        learning_rate=config.student_learning_rate,
-        batch_size=config.training.batch_size,
-        num_atoms=num_atoms,
-        energy_weight=config.training.energy_weight,
-        forces_weight=config.training.forces_weight,
-        data_keys=("R", "Z", "F", "E", "N"),
-        name=student_run_name,
-        ckpt_dir=config.training.ckpt_root,
-        best=True,
-        save_every_epoch=config.training.save_every_epoch,
-        batch_method="default",
-        log_tb=config.training.log_tb,
-        print_freq=config.training.print_freq,
-    )
+    student_ckpt_dir = latest_run_dir(config.training.ckpt_root, student_run_name)
+    student_ema_params, student_best_loss = (None, None)
+    if resume:
+        student_ema_params, student_best_loss = maybe_resume_ema_params(student_ckpt_dir)
+    if student_ema_params is None:
+        student_ema_params, student_best_loss = train_model(
+            key=student_key,
+            model=student_model,
+            train_data=teacher_train_targets,
+            valid_data=teacher_valid_targets,
+            num_epochs=config.student_epochs,
+            learning_rate=config.student_learning_rate,
+            batch_size=config.training.batch_size,
+            num_atoms=num_atoms,
+            energy_weight=config.training.energy_weight,
+            forces_weight=config.training.forces_weight,
+            data_keys=("R", "Z", "F", "E", "N"),
+            name=student_run_name,
+            ckpt_dir=config.training.ckpt_root,
+            best=True,
+            save_every_epoch=config.training.save_every_epoch,
+            batch_method="default",
+            log_tb=config.training.log_tb,
+            print_freq=config.training.print_freq,
+        )
     student_ckpt_dir = latest_run_dir(config.training.ckpt_root, student_run_name)
     student_metrics = evaluate_test_set(
         model=student_model,
