@@ -12,6 +12,12 @@ Artifacts:
 - Per-selection results: `checkpoints/rmd17_aspirin/experiment_metadata/<run_name>/result_summary.json`
 - Aggregated results: `checkpoints/rmd17_aspirin/experiment_results.json`
 
+When `teacher_noise.enabled: true` in `config/experiments.yaml`, Snakemake runs an additional
+variant for every selection with run names suffixed by `teacher_noise` (configurable). Before
+teacher training, Gaussian noise is added to train/valid energies and forces with
+`std_noise = scale * std(labels)` computed separately for each split and quantity.
+Set `teacher_noise.enabled: false` to run only the baseline matrix.
+
 Useful commands:
 - Run one target only (example):
   - `snakemake checkpoints/rmd17_aspirin/experiment_results.json -j 1`

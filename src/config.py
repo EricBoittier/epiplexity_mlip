@@ -53,6 +53,14 @@ class SoapConfig:
 
 
 @dataclass(frozen=True)
+class TeacherNoiseConfig:
+    """Gaussian noise on teacher train/valid E and F, scaled by each split's std."""
+
+    scale: float = 1.0
+    run_suffix: str = "teacher_noise"
+
+
+@dataclass(frozen=True)
 class SelectionConfig:
     name: str
     kind: SelectionKind
@@ -93,6 +101,7 @@ class ExperimentConfig:
     )
     student_epochs: int = 500
     student_learning_rate: float = 5e-4
+    teacher_noise: TeacherNoiseConfig | None = None
     selections: tuple[SelectionConfig, ...] = field(default_factory=tuple)
 
 

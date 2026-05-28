@@ -43,6 +43,13 @@ selection_matrix:
   stride: 10
   train_fraction: 0.95
 
+# Additional experiment: Gaussian noise on teacher train/valid E and F before teacher training.
+# Noise std = scale * std(labels) computed separately for each split (train vs valid).
+teacher_noise:
+  enabled: true
+  scale: 1.0
+  run_suffix: teacher_noise
+
 outputs:
   aggregate_results_json: checkpoints/rmd17_aspirin/experiment_results.json
   snakemake_done_dir: checkpoints/rmd17_aspirin/snakemake_done

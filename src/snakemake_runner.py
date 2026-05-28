@@ -10,6 +10,7 @@ from src.config import (
     ExperimentConfig,
     ModelConfig,
     SelectionConfig,
+    TeacherNoiseConfig,
     TrainingConfig,
     default_config,
 )
@@ -80,6 +81,13 @@ def build_config_from_args(args: argparse.Namespace, selection: SelectionConfig)
         charges=bool(args.student_charges),
         zbl=bool(args.student_zbl),
     )
+    teacher_noise = None
+    if args.teacher_noise_scale is not None and args.teacher_noise_scale > 0.0:
+        teacher_noise = TeacherNoiseConfig(
+            scale=float(args.teacher_noise_scale),
+            run_suffix=args.teacher_noise_suffix,
+        )
+
     return ExperimentConfig(
         molecule=args.molecule,
         dataset=dataset_cfg,
@@ -88,6 +96,7 @@ def build_config_from_args(args: argparse.Namespace, selection: SelectionConfig)
         student_model=student_model_cfg,
         student_epochs=args.student_epochs,
         student_learning_rate=args.student_learning_rate,
+        teacher_noise=teacher_noise,
         selections=(selection,),
     )
 
@@ -187,6 +196,17 @@ def parse_args() -> argparse.Namespace:
     run_parser.add_argument("--seeds", nargs="+", type=int, required=True)
     run_parser.add_argument("--metrics", nargs="+", required=True)
     run_parser.add_argument("--resume", type=_bool_arg, default=False)
+    run_parser.add_argument(
+        "--teacher-noise-scale",
+        type=float,
+        default=None,
+        help="If set and > 0, add Gaussian noise to teacher train/valid E/F scaled by this factor times each split's std.",
+    )
+    run_parser.add_argument(
+        "--teacher-noise-suffix",
+        default="teacher_noise",
+        help="Suffix appended to run names for teacher-noise variants.",
+    )
 
     agg_parser = subparsers.add_parser("aggregate")
     agg_parser.add_argument("--input-json", nargs="+", required=True)

@@ -32,7 +32,15 @@ from mmml.physnetjax.physnetjax.data.batches import prepare_batches_jit
 from mmml.physnetjax.physnetjax.models.model import EF
 from mmml.physnetjax.physnetjax.training.training import train_model
 
-from src.config import EV_PER_KCAL, ExperimentConfig, ModelConfig, SelectionConfig, SoapConfig, TrainingConfig
+from src.config import (
+    EV_PER_KCAL,
+    ExperimentConfig,
+    ModelConfig,
+    SelectionConfig,
+    SoapConfig,
+    TeacherNoiseConfig,
+    TrainingConfig,
+)
 
 patch_chemcoord_for_pandas3()
 
@@ -227,6 +235,39 @@ def make_selected_data(
     return train_data, valid_data, metadata
 
 
+def add_teacher_label_noise(
+    data: dict[str, Any],
+    *,
+    scale: float,
+    seed: int,
+) -> tuple[dict[str, Any], dict[str, float]]:
+    """Add Gaussian noise to E and F proportional to each array's standard deviation."""
+    if scale <= 0.0:
+        raise ValueError(f"teacher noise scale must be positive, got {scale}")
+
+    out = {k: np.copy(v) if isinstance(v, np.ndarray) else v for k, v in data.items()}
+    rng = np.random.default_rng(seed)
+
+    energy = np.asarray(out["E"], dtype=float)
+    forces = np.asarray(out["F"], dtype=float)
+    energy_std = float(np.std(energy))
+    force_std = float(np.std(forces))
+
+    if energy_std > 0.0:
+        out["E"] = energy + scale * energy_std * rng.standard_normal(energy.shape)
+    if force_std > 0.0:
+        out["F"] = forces + scale * force_std * rng.standard_normal(forces.shape)
+
+    metadata = {
+        "scale": float(scale),
+        "energy_std": energy_std,
+        "force_std": force_std,
+        "energy_noise_std": float(scale * energy_std),
+        "force_noise_std": float(scale * force_std),
+    }
+    return out, metadata
+
+
 def center_energies_on_train(
     train_data: dict[str, Any],
     valid_data: dict[str, Any],
@@ -403,6 +444,11 @@ def _resume_signature(
         "student_model": asdict(config.student_model),
         "student_epochs": int(config.student_epochs),
         "student_learning_rate": float(config.student_learning_rate),
+        "teacher_noise": (
+            None
+            if config.teacher_noise is None
+            else {"scale": float(config.teacher_noise.scale), "run_suffix": config.teacher_noise.run_suffix}
+        ),
         "num_atoms": int(num_atoms),
     }
 
@@ -582,6 +628,24 @@ def train_one_experiment(
     )
     test_data = {k: np.copy(v) if isinstance(v, np.ndarray) else v for k, v in test_data_uncentered.items()}
     train_data, valid_data, test_data, train_e_mean = center_energies_on_train(train_data, valid_data, test_data)
+    teacher_noise_metadata: dict[str, Any] | None = None
+    if config.teacher_noise is not None:
+        train_data, train_noise = add_teacher_label_noise(
+            train_data,
+            scale=config.teacher_noise.scale,
+            seed=selection.seed + 10_000,
+        )
+        valid_data, valid_noise = add_teacher_label_noise(
+            valid_data,
+            scale=config.teacher_noise.scale,
+            seed=selection.seed + 10_001,
+        )
+        teacher_noise_metadata = {
+            "scale": float(config.teacher_noise.scale),
+            "run_suffix": config.teacher_noise.run_suffix,
+            "train": train_noise,
+            "valid": valid_noise,
+        }
     np.save(run_output_dir / "train_idx.npy", selection_metadata["train_idx"])
     np.save(run_output_dir / "valid_idx.npy", selection_metadata["valid_idx"])
     if "info_df" in selection_metadata:
@@ -596,7 +660,13 @@ def train_one_experiment(
         selection_metadata["valid_windows_path"] = str(run_output_dir / "valid_windows.pkl")
     with open(run_output_dir / "selection_metadata.json", "w") as f:
         json.dump(
-            {**selection_metadata, "train_e_mean": train_e_mean, "splits_dir": str(splits_dir), "run_uuid": run_uuid},
+            {
+                **selection_metadata,
+                "train_e_mean": train_e_mean,
+                "splits_dir": str(splits_dir),
+                "run_uuid": run_uuid,
+                "teacher_noise": teacher_noise_metadata,
+            },
             f,
             indent=2,
             default=str,
@@ -760,6 +830,7 @@ def train_one_experiment(
         "teacher": {
             "best_loss": float(best_loss),
             "run_ckpt_dir": str(run_ckpt_dir) if run_ckpt_dir else None,
+            "label_noise": teacher_noise_metadata,
             "test_metrics": teacher_metrics,
             "train_target_source": teacher_train_meta,
             "valid_target_source": teacher_valid_meta,
