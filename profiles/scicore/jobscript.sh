@@ -12,9 +12,12 @@
 
 set -euo pipefail
 
-# Double braces: Snakemake treats {{ as literal { in the submitted script.
-export TMPDIR="${{TMPDIR:-/tmp}}"
-mkdir -p "${{TMPDIR}}"
+# No ${...} here — Snakemake jobscripts use Python .format() and choke on braces.
+export TMPDIR=/tmp
+if [ -n "$SLURM_TMPDIR" ]; then
+  export TMPDIR="$SLURM_TMPDIR"
+fi
+mkdir -p "$TMPDIR"
 
 hostname
 which python
