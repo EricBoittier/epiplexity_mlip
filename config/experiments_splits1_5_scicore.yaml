@@ -1,13 +1,13 @@
-# SciCORE: splits 1–5; checkpoints on node /tmp (large, not counted against $HOME).
+# SciCORE: train on node /tmp; Snakemake outputs on shared storage (login-visible).
 #
-# On the login node before snakemake:
 #   mkdir -p /tmp/epiplexity_mlip/rmd17_aspirin_splits1_5/checkpoints
-#   cd ~/epiplexity
-#   export TMPDIR=/tmp
-#   snakemake --profile profiles/scicore --configfile config/experiments_splits1_5_scicore.yaml
+#   export SCICORE_LAB_ROOT=~/epiplexity_storage/rmd17_aspirin_splits1_5  # or bash scripts/scicore_use_lab_storage.sh
+#   mkdir -p "${SCICORE_LAB_ROOT}/checkpoints"
+#   cd ~/epiplexity && export TMPDIR=/tmp
+#   snakemake --profile profiles/scicore --configfile config/experiments_splits1_5_scicore.yaml -j 4
 #
-# Note: /tmp is per compute node and may be cleared when the job ends. Copy
-# experiment_metadata/ and experiment_results.json to lab storage if you need them later.
+# Each job copies experiment_metadata/<run_name>/ and writes .done + result_summary.json
+# under outputs.shared_ckpt_root when training finishes.
 
 molecule: rmd17_aspirin
 
@@ -59,8 +59,9 @@ selection_matrix:
   train_fraction: 0.95
 
 outputs:
-  aggregate_results_json: /tmp/epiplexity_mlip/rmd17_aspirin_splits1_5/checkpoints/experiment_results.json
-  snakemake_done_dir: /tmp/epiplexity_mlip/rmd17_aspirin_splits1_5/checkpoints/snakemake_done
+  shared_ckpt_root: __SCICORE_LAB_ROOT__/checkpoints
+  aggregate_results_json: __SCICORE_LAB_ROOT__/checkpoints/experiment_results.json
+  snakemake_done_dir: __SCICORE_LAB_ROOT__/checkpoints/snakemake_done
 
 teacher_noise:
   enabled: false

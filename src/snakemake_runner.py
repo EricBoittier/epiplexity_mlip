@@ -16,6 +16,7 @@ from src.config import (
     default_config,
 )
 from src.experiment import load_experiment_data, train_one_experiment
+from src.shared_storage import pull_metadata_for_resume, push_metadata_to_shared
 
 
 def build_selection_matrix(
@@ -138,6 +139,15 @@ def _run_selection_impl(args: argparse.Namespace) -> None:
     selection = by_name[args.selection_name]
     config = build_config_from_args(args, selection)
     config.training.ckpt_root.mkdir(parents=True, exist_ok=True)
+    run_name = selection.run_name(config.molecule, config.dataset.split_id)
+    shared_ckpt_root = Path(args.shared_ckpt_root).resolve() if args.shared_ckpt_root else None
+    if shared_ckpt_root is not None:
+        shared_ckpt_root.mkdir(parents=True, exist_ok=True)
+        pull_metadata_for_resume(
+            local_ckpt_root=config.training.ckpt_root,
+            shared_ckpt_root=shared_ckpt_root,
+            run_name=run_name,
+        )
     data, official_train_pool_data, test_data, splits_dir, num_atoms = load_experiment_data(config)
     result = train_one_experiment(
         config=config,
@@ -157,6 +167,14 @@ def _run_selection_impl(args: argparse.Namespace) -> None:
     done_path = Path(args.done_file)
     done_path.parent.mkdir(parents=True, exist_ok=True)
     done_path.write_text("ok\n")
+
+    if shared_ckpt_root is not None:
+        push_metadata_to_shared(
+            local_ckpt_root=config.training.ckpt_root,
+            shared_ckpt_root=shared_ckpt_root,
+            run_name=run_name,
+        )
+        print(f"Synced experiment_metadata/{run_name} to {shared_ckpt_root}")
 
 
 def aggregate_results(args: argparse.Namespace) -> None:
@@ -186,6 +204,11 @@ def parse_args() -> argparse.Namespace:
     run_parser.add_argument("--max-structures", type=int, default=None)
     run_parser.add_argument("--convert-to-ev", type=_bool_arg, default=True)
     run_parser.add_argument("--ckpt-root", required=True)
+    run_parser.add_argument(
+        "--shared-ckpt-root",
+        default="",
+        help="NFS/shared checkpoint root; experiment_metadata is synced here after each job.",
+    )
 
     run_parser.add_argument("--num-epochs", type=int, default=1000)
     run_parser.add_argument("--batch-size", type=int, default=50)

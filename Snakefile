@@ -60,11 +60,17 @@ for split_id in SPLIT_IDS:
                 "teacher_noise_scale": noise_scale,
                 "teacher_noise_suffix": noise_suffix or "",
             }
+LOCAL_CKPT_ROOT = config["training"]["ckpt_root"]
+SHARED_CKPT_ROOT = config["outputs"].get("shared_ckpt_root", LOCAL_CKPT_ROOT)
 DONE_DIR = config["outputs"]["snakemake_done_dir"]
 AGG_JSON = config["outputs"]["aggregate_results_json"]
-CKPT_ROOT = config["training"]["ckpt_root"]
 PYTHON_BIN = config.get("execution", {}).get("python_bin", ".venv/bin/python")
 RESUME = config.get("execution", {}).get("resume", True)
+SHARED_CKPT_CMD = (
+    f"--shared-ckpt-root {SHARED_CKPT_ROOT}"
+    if SHARED_CKPT_ROOT != LOCAL_CKPT_ROOT
+    else ""
+)
 
 
 rule all:
@@ -74,7 +80,7 @@ rule all:
 
 rule run_selection:
     output:
-        result_json=f"{CKPT_ROOT}/experiment_metadata/{{run_name}}/result_summary.json",
+        result_json=f"{SHARED_CKPT_ROOT}/experiment_metadata/{{run_name}}/result_summary.json",
         done=f"{DONE_DIR}/{{run_name}}.done",
     params:
         selection_name=lambda wc: RUN_TO_META[wc.run_name]["selection_name"],
@@ -82,7 +88,7 @@ rule run_selection:
         molecule=config["molecule"],
         data_path=config["dataset"]["data_path"],
         splits_dir=config["dataset"]["splits_dir"],
-        ckpt_root=config["training"]["ckpt_root"],
+        ckpt_root=LOCAL_CKPT_ROOT,
         num_epochs=config["training"]["num_epochs"],
         batch_size=config["training"]["batch_size"],
         learning_rate=config["training"]["learning_rate"],
@@ -111,6 +117,7 @@ rule run_selection:
         convert_to_ev=config["dataset"]["convert_to_ev"],
         python_bin=PYTHON_BIN,
         resume=RESUME,
+        shared_ckpt_cmd=SHARED_CKPT_CMD,
         teacher_noise_scale=lambda wc: RUN_TO_META[wc.run_name]["teacher_noise_scale"],
         teacher_noise_suffix_cmd=lambda wc: (
             f"--teacher-noise-suffix {RUN_TO_META[wc.run_name]['teacher_noise_suffix']}"
@@ -135,6 +142,7 @@ rule run_selection:
             "--splits-dir '{params.splits_dir}' "
             "--split-id {params.split_id} "
             "--ckpt-root {params.ckpt_root} "
+            "{params.shared_ckpt_cmd} "
             "--num-epochs {params.num_epochs} "
             "--batch-size {params.batch_size} "
             "--learning-rate {params.learning_rate} "
@@ -170,7 +178,7 @@ rule run_selection:
 
 rule aggregate:
     input:
-        expand(f"{CKPT_ROOT}/experiment_metadata/{{run_name}}/result_summary.json", run_name=RUN_NAMES)
+        expand(f"{SHARED_CKPT_ROOT}/experiment_metadata/{{run_name}}/result_summary.json", run_name=RUN_NAMES)
     output:
         AGG_JSON
     params:

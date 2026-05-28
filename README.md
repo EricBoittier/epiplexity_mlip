@@ -105,15 +105,21 @@ Use `--configfile`, not `--config`.
 
 Home (`/scicore/home/meuwly/boitti0000/`) has a small quota. Checkpoints fill it quickly with `save_every_epoch: true`.
 
-Use the SciCORE config (group/lab path + `save_every_epoch: false`):
+Use `config/experiments_splits1_5_scicore.yaml` for splits 1–5: heavy Orbax checkpoints on node `/tmp`, Snakemake outputs on shared storage (`outputs.shared_ckpt_root`). Each job syncs `experiment_metadata/<run_name>/` to shared storage when it finishes (and pulls it to `/tmp` on resume).
 
 ```bash
-# Find a path you can write to (/scicore/home/meuwly/meuwly is often PI-only):
-bash scripts/scicore_find_lab_root.sh
-
+mkdir -p /tmp/epiplexity_mlip/rmd17_aspirin_splits1_5/checkpoints
+mkdir -p ~/epiplexity_storage/rmd17_aspirin_splits1_5/checkpoints
 cd ~/epiplexity
+export TMPDIR=/tmp
+snakemake --profile profiles/scicore --configfile config/experiments_splits1_5_scicore.yaml -j 4
+```
+
+Legacy lab-storage helper (symlinks `.snakemake/` only):
+
+```bash
+bash scripts/scicore_find_lab_root.sh
 export SCICORE_LAB_ROOT=/scicore/home/meuwly/boitti0000/epiplexity_storage/rmd17_aspirin_splits1_5
-rm -rf .snakemake checkpoints   # free home if needed
 bash scripts/scicore_use_lab_storage.sh
 source .scicore_lab_env
 snakemake --profile profiles/scicore --configfile "${GENERATED_CONFIG}"
