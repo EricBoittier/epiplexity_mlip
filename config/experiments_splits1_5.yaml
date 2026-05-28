@@ -46,3 +46,8 @@ selection_matrix:
 outputs:
   aggregate_results_json: checkpoints/rmd17_aspirin_splits2_5/experiment_results.json
   snakemake_done_dir: checkpoints/rmd17_aspirin_splits2_5/snakemake_done
+
+teacher_noise:
+  enabled: false
+  scale: 0.0
+  run_suffix: teacher_noise
