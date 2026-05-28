@@ -1,0 +1,219 @@
+host: login12
+Building DAG of jobs...
+Using shell: /usr/bin/bash
+Provided remote nodes: 50
+Job stats:
+job              count
+-------------  -------
+run_selection       12
+aggregate            1
+all                  1
+total               14
+
+Select jobs to execute...
+Execute 12 jobs...
+[Thu May 28 12:43:14 2026]
+rule run_selection:
+    output: checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_soap_ws10_st10_seed42/result_summary.json, checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_gzip_bytes_soap_ws10_st10_seed42.done
+    jobid: 7
+    reason: Missing output files: checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_soap_ws10_st10_seed42/result_summary.json
+    wildcards: run_name=rmd17_aspirin_split01_gzip_bytes_soap_ws10_st10_seed42
+    resources: tmpdir=<TBD>
+Shell command: python -m src.snakemake_runner run-selection --selection-name gzip_bytes_soap_ws10_seed42 --output-json checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_soap_ws10_st10_seed42/result_summary.json --done-file checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_gzip_bytes_soap_ws10_st10_seed42.done --molecule rmd17_aspirin --data-path /scicore/home/meuwly/boitti0000/data/rmd17/npz_data/rmd17_aspirin.npz --splits-dir '' --split-id 1 --ckpt-root checkpoints/rmd17_aspirin --num-epochs 1000 --batch-size 50 --learning-rate 0.001 --n-train 950 --n-valid 50 --energy-weight 1.0 --forces-weight 52.91 --save-every-epoch True --log-tb False --print-freq 1 --student-epochs 500 --student-learning-rate 0.0005 --student-features 32 --student-max-degree 0 --student-num-iterations 2 --student-num-basis-functions 16 --student-cutoff 5.0 --student-charges False --student-zbl False --convert-to-ev True --window-size 10 --stride 10 --train-fraction 0.95 --seeds 42 43 44 --metrics gzip_bytes_cart gzip_bytes_zmat gzip_bytes_soap
+[Thu May 28 12:43:14 2026]
+Error in rule run_selection:
+    message: Error submitting jobscript (exit code 1):
+For further error details see the cluster/cloud log and the log files of the involved rule(s).
+    jobid: 7
+    output: checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_soap_ws10_st10_seed42/result_summary.json, checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_gzip_bytes_soap_ws10_st10_seed42.done
+    shell:
+        python -m src.snakemake_runner run-selection --selection-name gzip_bytes_soap_ws10_seed42 --output-json checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_soap_ws10_st10_seed42/result_summary.json --done-file checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_gzip_bytes_soap_ws10_st10_seed42.done --molecule rmd17_aspirin --data-path /scicore/home/meuwly/boitti0000/data/rmd17/npz_data/rmd17_aspirin.npz --splits-dir '' --split-id 1 --ckpt-root checkpoints/rmd17_aspirin --num-epochs 1000 --batch-size 50 --learning-rate 0.001 --n-train 950 --n-valid 50 --energy-weight 1.0 --forces-weight 52.91 --save-every-epoch True --log-tb False --print-freq 1 --student-epochs 500 --student-learning-rate 0.0005 --student-features 32 --student-max-degree 0 --student-num-iterations 2 --student-num-basis-functions 16 --student-cutoff 5.0 --student-charges False --student-zbl False --convert-to-ev True --window-size 10 --stride 10 --train-fraction 0.95 --seeds 42 43 44 --metrics gzip_bytes_cart gzip_bytes_zmat gzip_bytes_soap
+        (command exited with non-zero exit code)
+[Thu May 28 12:43:14 2026]
+rule run_selection:
+    output: checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_zmat_ws10_st10_seed43/result_summary.json, checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_gzip_bytes_zmat_ws10_st10_seed43.done
+    jobid: 9
+    reason: Missing output files: checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_zmat_ws10_st10_seed43/result_summary.json
+    wildcards: run_name=rmd17_aspirin_split01_gzip_bytes_zmat_ws10_st10_seed43
+    resources: tmpdir=<TBD>
+Shell command: python -m src.snakemake_runner run-selection --selection-name gzip_bytes_zmat_ws10_seed43 --output-json checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_zmat_ws10_st10_seed43/result_summary.json --done-file checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_gzip_bytes_zmat_ws10_st10_seed43.done --molecule rmd17_aspirin --data-path /scicore/home/meuwly/boitti0000/data/rmd17/npz_data/rmd17_aspirin.npz --splits-dir '' --split-id 1 --ckpt-root checkpoints/rmd17_aspirin --num-epochs 1000 --batch-size 50 --learning-rate 0.001 --n-train 950 --n-valid 50 --energy-weight 1.0 --forces-weight 52.91 --save-every-epoch True --log-tb False --print-freq 1 --student-epochs 500 --student-learning-rate 0.0005 --student-features 32 --student-max-degree 0 --student-num-iterations 2 --student-num-basis-functions 16 --student-cutoff 5.0 --student-charges False --student-zbl False --convert-to-ev True --window-size 10 --stride 10 --train-fraction 0.95 --seeds 42 43 44 --metrics gzip_bytes_cart gzip_bytes_zmat gzip_bytes_soap
+[Thu May 28 12:43:14 2026]
+Error in rule run_selection:
+    message: Error submitting jobscript (exit code 1):
+For further error details see the cluster/cloud log and the log files of the involved rule(s).
+    jobid: 9
+    output: checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_zmat_ws10_st10_seed43/result_summary.json, checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_gzip_bytes_zmat_ws10_st10_seed43.done
+    shell:
+        python -m src.snakemake_runner run-selection --selection-name gzip_bytes_zmat_ws10_seed43 --output-json checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_zmat_ws10_st10_seed43/result_summary.json --done-file checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_gzip_bytes_zmat_ws10_st10_seed43.done --molecule rmd17_aspirin --data-path /scicore/home/meuwly/boitti0000/data/rmd17/npz_data/rmd17_aspirin.npz --splits-dir '' --split-id 1 --ckpt-root checkpoints/rmd17_aspirin --num-epochs 1000 --batch-size 50 --learning-rate 0.001 --n-train 950 --n-valid 50 --energy-weight 1.0 --forces-weight 52.91 --save-every-epoch True --log-tb False --print-freq 1 --student-epochs 500 --student-learning-rate 0.0005 --student-features 32 --student-max-degree 0 --student-num-iterations 2 --student-num-basis-functions 16 --student-cutoff 5.0 --student-charges False --student-zbl False --convert-to-ev True --window-size 10 --stride 10 --train-fraction 0.95 --seeds 42 43 44 --metrics gzip_bytes_cart gzip_bytes_zmat gzip_bytes_soap
+        (command exited with non-zero exit code)
+[Thu May 28 12:43:14 2026]
+rule run_selection:
+    output: checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_cart_ws10_st10_seed44/result_summary.json, checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_gzip_bytes_cart_ws10_st10_seed44.done
+    jobid: 11
+    reason: Missing output files: checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_cart_ws10_st10_seed44/result_summary.json
+    wildcards: run_name=rmd17_aspirin_split01_gzip_bytes_cart_ws10_st10_seed44
+    resources: tmpdir=<TBD>
+Shell command: python -m src.snakemake_runner run-selection --selection-name gzip_bytes_cart_ws10_seed44 --output-json checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_cart_ws10_st10_seed44/result_summary.json --done-file checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_gzip_bytes_cart_ws10_st10_seed44.done --molecule rmd17_aspirin --data-path /scicore/home/meuwly/boitti0000/data/rmd17/npz_data/rmd17_aspirin.npz --splits-dir '' --split-id 1 --ckpt-root checkpoints/rmd17_aspirin --num-epochs 1000 --batch-size 50 --learning-rate 0.001 --n-train 950 --n-valid 50 --energy-weight 1.0 --forces-weight 52.91 --save-every-epoch True --log-tb False --print-freq 1 --student-epochs 500 --student-learning-rate 0.0005 --student-features 32 --student-max-degree 0 --student-num-iterations 2 --student-num-basis-functions 16 --student-cutoff 5.0 --student-charges False --student-zbl False --convert-to-ev True --window-size 10 --stride 10 --train-fraction 0.95 --seeds 42 43 44 --metrics gzip_bytes_cart gzip_bytes_zmat gzip_bytes_soap
+[Thu May 28 12:43:14 2026]
+Error in rule run_selection:
+    message: Error submitting jobscript (exit code 1):
+For further error details see the cluster/cloud log and the log files of the involved rule(s).
+    jobid: 11
+    output: checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_cart_ws10_st10_seed44/result_summary.json, checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_gzip_bytes_cart_ws10_st10_seed44.done
+    shell:
+        python -m src.snakemake_runner run-selection --selection-name gzip_bytes_cart_ws10_seed44 --output-json checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_cart_ws10_st10_seed44/result_summary.json --done-file checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_gzip_bytes_cart_ws10_st10_seed44.done --molecule rmd17_aspirin --data-path /scicore/home/meuwly/boitti0000/data/rmd17/npz_data/rmd17_aspirin.npz --splits-dir '' --split-id 1 --ckpt-root checkpoints/rmd17_aspirin --num-epochs 1000 --batch-size 50 --learning-rate 0.001 --n-train 950 --n-valid 50 --energy-weight 1.0 --forces-weight 52.91 --save-every-epoch True --log-tb False --print-freq 1 --student-epochs 500 --student-learning-rate 0.0005 --student-features 32 --student-max-degree 0 --student-num-iterations 2 --student-num-basis-functions 16 --student-cutoff 5.0 --student-charges False --student-zbl False --convert-to-ev True --window-size 10 --stride 10 --train-fraction 0.95 --seeds 42 43 44 --metrics gzip_bytes_cart gzip_bytes_zmat gzip_bytes_soap
+        (command exited with non-zero exit code)
+[Thu May 28 12:43:14 2026]
+rule run_selection:
+    output: checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_soap_ws10_st10_seed44/result_summary.json, checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_gzip_bytes_soap_ws10_st10_seed44.done
+    jobid: 13
+    reason: Missing output files: checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_soap_ws10_st10_seed44/result_summary.json
+    wildcards: run_name=rmd17_aspirin_split01_gzip_bytes_soap_ws10_st10_seed44
+    resources: tmpdir=<TBD>
+Shell command: python -m src.snakemake_runner run-selection --selection-name gzip_bytes_soap_ws10_seed44 --output-json checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_soap_ws10_st10_seed44/result_summary.json --done-file checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_gzip_bytes_soap_ws10_st10_seed44.done --molecule rmd17_aspirin --data-path /scicore/home/meuwly/boitti0000/data/rmd17/npz_data/rmd17_aspirin.npz --splits-dir '' --split-id 1 --ckpt-root checkpoints/rmd17_aspirin --num-epochs 1000 --batch-size 50 --learning-rate 0.001 --n-train 950 --n-valid 50 --energy-weight 1.0 --forces-weight 52.91 --save-every-epoch True --log-tb False --print-freq 1 --student-epochs 500 --student-learning-rate 0.0005 --student-features 32 --student-max-degree 0 --student-num-iterations 2 --student-num-basis-functions 16 --student-cutoff 5.0 --student-charges False --student-zbl False --convert-to-ev True --window-size 10 --stride 10 --train-fraction 0.95 --seeds 42 43 44 --metrics gzip_bytes_cart gzip_bytes_zmat gzip_bytes_soap
+[Thu May 28 12:43:14 2026]
+Error in rule run_selection:
+    message: Error submitting jobscript (exit code 1):
+For further error details see the cluster/cloud log and the log files of the involved rule(s).
+    jobid: 13
+    output: checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_soap_ws10_st10_seed44/result_summary.json, checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_gzip_bytes_soap_ws10_st10_seed44.done
+    shell:
+        python -m src.snakemake_runner run-selection --selection-name gzip_bytes_soap_ws10_seed44 --output-json checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_soap_ws10_st10_seed44/result_summary.json --done-file checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_gzip_bytes_soap_ws10_st10_seed44.done --molecule rmd17_aspirin --data-path /scicore/home/meuwly/boitti0000/data/rmd17/npz_data/rmd17_aspirin.npz --splits-dir '' --split-id 1 --ckpt-root checkpoints/rmd17_aspirin --num-epochs 1000 --batch-size 50 --learning-rate 0.001 --n-train 950 --n-valid 50 --energy-weight 1.0 --forces-weight 52.91 --save-every-epoch True --log-tb False --print-freq 1 --student-epochs 500 --student-learning-rate 0.0005 --student-features 32 --student-max-degree 0 --student-num-iterations 2 --student-num-basis-functions 16 --student-cutoff 5.0 --student-charges False --student-zbl False --convert-to-ev True --window-size 10 --stride 10 --train-fraction 0.95 --seeds 42 43 44 --metrics gzip_bytes_cart gzip_bytes_zmat gzip_bytes_soap
+        (command exited with non-zero exit code)
+[Thu May 28 12:43:14 2026]
+rule run_selection:
+    output: checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_random_seed42/result_summary.json, checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_random_seed42.done
+    jobid: 2
+    reason: Missing output files: checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_random_seed42/result_summary.json
+    wildcards: run_name=rmd17_aspirin_split01_random_seed42
+    resources: tmpdir=<TBD>
+Shell command: python -m src.snakemake_runner run-selection --selection-name random_seed42 --output-json checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_random_seed42/result_summary.json --done-file checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_random_seed42.done --molecule rmd17_aspirin --data-path /scicore/home/meuwly/boitti0000/data/rmd17/npz_data/rmd17_aspirin.npz --splits-dir '' --split-id 1 --ckpt-root checkpoints/rmd17_aspirin --num-epochs 1000 --batch-size 50 --learning-rate 0.001 --n-train 950 --n-valid 50 --energy-weight 1.0 --forces-weight 52.91 --save-every-epoch True --log-tb False --print-freq 1 --student-epochs 500 --student-learning-rate 0.0005 --student-features 32 --student-max-degree 0 --student-num-iterations 2 --student-num-basis-functions 16 --student-cutoff 5.0 --student-charges False --student-zbl False --convert-to-ev True --window-size 10 --stride 10 --train-fraction 0.95 --seeds 42 43 44 --metrics gzip_bytes_cart gzip_bytes_zmat gzip_bytes_soap
+[Thu May 28 12:43:14 2026]
+Error in rule run_selection:
+    message: Error submitting jobscript (exit code 1):
+For further error details see the cluster/cloud log and the log files of the involved rule(s).
+    jobid: 2
+    output: checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_random_seed42/result_summary.json, checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_random_seed42.done
+    shell:
+        python -m src.snakemake_runner run-selection --selection-name random_seed42 --output-json checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_random_seed42/result_summary.json --done-file checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_random_seed42.done --molecule rmd17_aspirin --data-path /scicore/home/meuwly/boitti0000/data/rmd17/npz_data/rmd17_aspirin.npz --splits-dir '' --split-id 1 --ckpt-root checkpoints/rmd17_aspirin --num-epochs 1000 --batch-size 50 --learning-rate 0.001 --n-train 950 --n-valid 50 --energy-weight 1.0 --forces-weight 52.91 --save-every-epoch True --log-tb False --print-freq 1 --student-epochs 500 --student-learning-rate 0.0005 --student-features 32 --student-max-degree 0 --student-num-iterations 2 --student-num-basis-functions 16 --student-cutoff 5.0 --student-charges False --student-zbl False --convert-to-ev True --window-size 10 --stride 10 --train-fraction 0.95 --seeds 42 43 44 --metrics gzip_bytes_cart gzip_bytes_zmat gzip_bytes_soap
+        (command exited with non-zero exit code)
+[Thu May 28 12:43:14 2026]
+rule run_selection:
+    output: checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_random_seed44/result_summary.json, checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_random_seed44.done
+    jobid: 4
+    reason: Missing output files: checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_random_seed44/result_summary.json
+    wildcards: run_name=rmd17_aspirin_split01_random_seed44
+    resources: tmpdir=<TBD>
+Shell command: python -m src.snakemake_runner run-selection --selection-name random_seed44 --output-json checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_random_seed44/result_summary.json --done-file checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_random_seed44.done --molecule rmd17_aspirin --data-path /scicore/home/meuwly/boitti0000/data/rmd17/npz_data/rmd17_aspirin.npz --splits-dir '' --split-id 1 --ckpt-root checkpoints/rmd17_aspirin --num-epochs 1000 --batch-size 50 --learning-rate 0.001 --n-train 950 --n-valid 50 --energy-weight 1.0 --forces-weight 52.91 --save-every-epoch True --log-tb False --print-freq 1 --student-epochs 500 --student-learning-rate 0.0005 --student-features 32 --student-max-degree 0 --student-num-iterations 2 --student-num-basis-functions 16 --student-cutoff 5.0 --student-charges False --student-zbl False --convert-to-ev True --window-size 10 --stride 10 --train-fraction 0.95 --seeds 42 43 44 --metrics gzip_bytes_cart gzip_bytes_zmat gzip_bytes_soap
+[Thu May 28 12:43:14 2026]
+Error in rule run_selection:
+    message: Error submitting jobscript (exit code 1):
+For further error details see the cluster/cloud log and the log files of the involved rule(s).
+    jobid: 4
+    output: checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_random_seed44/result_summary.json, checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_random_seed44.done
+    shell:
+        python -m src.snakemake_runner run-selection --selection-name random_seed44 --output-json checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_random_seed44/result_summary.json --done-file checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_random_seed44.done --molecule rmd17_aspirin --data-path /scicore/home/meuwly/boitti0000/data/rmd17/npz_data/rmd17_aspirin.npz --splits-dir '' --split-id 1 --ckpt-root checkpoints/rmd17_aspirin --num-epochs 1000 --batch-size 50 --learning-rate 0.001 --n-train 950 --n-valid 50 --energy-weight 1.0 --forces-weight 52.91 --save-every-epoch True --log-tb False --print-freq 1 --student-epochs 500 --student-learning-rate 0.0005 --student-features 32 --student-max-degree 0 --student-num-iterations 2 --student-num-basis-functions 16 --student-cutoff 5.0 --student-charges False --student-zbl False --convert-to-ev True --window-size 10 --stride 10 --train-fraction 0.95 --seeds 42 43 44 --metrics gzip_bytes_cart gzip_bytes_zmat gzip_bytes_soap
+        (command exited with non-zero exit code)
+[Thu May 28 12:43:14 2026]
+rule run_selection:
+    output: checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_zmat_ws10_st10_seed42/result_summary.json, checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_gzip_bytes_zmat_ws10_st10_seed42.done
+    jobid: 6
+    reason: Missing output files: checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_zmat_ws10_st10_seed42/result_summary.json
+    wildcards: run_name=rmd17_aspirin_split01_gzip_bytes_zmat_ws10_st10_seed42
+    resources: tmpdir=<TBD>
+Shell command: python -m src.snakemake_runner run-selection --selection-name gzip_bytes_zmat_ws10_seed42 --output-json checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_zmat_ws10_st10_seed42/result_summary.json --done-file checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_gzip_bytes_zmat_ws10_st10_seed42.done --molecule rmd17_aspirin --data-path /scicore/home/meuwly/boitti0000/data/rmd17/npz_data/rmd17_aspirin.npz --splits-dir '' --split-id 1 --ckpt-root checkpoints/rmd17_aspirin --num-epochs 1000 --batch-size 50 --learning-rate 0.001 --n-train 950 --n-valid 50 --energy-weight 1.0 --forces-weight 52.91 --save-every-epoch True --log-tb False --print-freq 1 --student-epochs 500 --student-learning-rate 0.0005 --student-features 32 --student-max-degree 0 --student-num-iterations 2 --student-num-basis-functions 16 --student-cutoff 5.0 --student-charges False --student-zbl False --convert-to-ev True --window-size 10 --stride 10 --train-fraction 0.95 --seeds 42 43 44 --metrics gzip_bytes_cart gzip_bytes_zmat gzip_bytes_soap
+[Thu May 28 12:43:14 2026]
+Error in rule run_selection:
+    message: Error submitting jobscript (exit code 1):
+For further error details see the cluster/cloud log and the log files of the involved rule(s).
+    jobid: 6
+    output: checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_zmat_ws10_st10_seed42/result_summary.json, checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_gzip_bytes_zmat_ws10_st10_seed42.done
+    shell:
+        python -m src.snakemake_runner run-selection --selection-name gzip_bytes_zmat_ws10_seed42 --output-json checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_zmat_ws10_st10_seed42/result_summary.json --done-file checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_gzip_bytes_zmat_ws10_st10_seed42.done --molecule rmd17_aspirin --data-path /scicore/home/meuwly/boitti0000/data/rmd17/npz_data/rmd17_aspirin.npz --splits-dir '' --split-id 1 --ckpt-root checkpoints/rmd17_aspirin --num-epochs 1000 --batch-size 50 --learning-rate 0.001 --n-train 950 --n-valid 50 --energy-weight 1.0 --forces-weight 52.91 --save-every-epoch True --log-tb False --print-freq 1 --student-epochs 500 --student-learning-rate 0.0005 --student-features 32 --student-max-degree 0 --student-num-iterations 2 --student-num-basis-functions 16 --student-cutoff 5.0 --student-charges False --student-zbl False --convert-to-ev True --window-size 10 --stride 10 --train-fraction 0.95 --seeds 42 43 44 --metrics gzip_bytes_cart gzip_bytes_zmat gzip_bytes_soap
+        (command exited with non-zero exit code)
+[Thu May 28 12:43:14 2026]
+rule run_selection:
+    output: checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_cart_ws10_st10_seed43/result_summary.json, checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_gzip_bytes_cart_ws10_st10_seed43.done
+    jobid: 8
+    reason: Missing output files: checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_cart_ws10_st10_seed43/result_summary.json
+    wildcards: run_name=rmd17_aspirin_split01_gzip_bytes_cart_ws10_st10_seed43
+    resources: tmpdir=<TBD>
+Shell command: python -m src.snakemake_runner run-selection --selection-name gzip_bytes_cart_ws10_seed43 --output-json checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_cart_ws10_st10_seed43/result_summary.json --done-file checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_gzip_bytes_cart_ws10_st10_seed43.done --molecule rmd17_aspirin --data-path /scicore/home/meuwly/boitti0000/data/rmd17/npz_data/rmd17_aspirin.npz --splits-dir '' --split-id 1 --ckpt-root checkpoints/rmd17_aspirin --num-epochs 1000 --batch-size 50 --learning-rate 0.001 --n-train 950 --n-valid 50 --energy-weight 1.0 --forces-weight 52.91 --save-every-epoch True --log-tb False --print-freq 1 --student-epochs 500 --student-learning-rate 0.0005 --student-features 32 --student-max-degree 0 --student-num-iterations 2 --student-num-basis-functions 16 --student-cutoff 5.0 --student-charges False --student-zbl False --convert-to-ev True --window-size 10 --stride 10 --train-fraction 0.95 --seeds 42 43 44 --metrics gzip_bytes_cart gzip_bytes_zmat gzip_bytes_soap
+[Thu May 28 12:43:14 2026]
+Error in rule run_selection:
+    message: Error submitting jobscript (exit code 1):
+For further error details see the cluster/cloud log and the log files of the involved rule(s).
+    jobid: 8
+    output: checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_cart_ws10_st10_seed43/result_summary.json, checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_gzip_bytes_cart_ws10_st10_seed43.done
+    shell:
+        python -m src.snakemake_runner run-selection --selection-name gzip_bytes_cart_ws10_seed43 --output-json checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_cart_ws10_st10_seed43/result_summary.json --done-file checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_gzip_bytes_cart_ws10_st10_seed43.done --molecule rmd17_aspirin --data-path /scicore/home/meuwly/boitti0000/data/rmd17/npz_data/rmd17_aspirin.npz --splits-dir '' --split-id 1 --ckpt-root checkpoints/rmd17_aspirin --num-epochs 1000 --batch-size 50 --learning-rate 0.001 --n-train 950 --n-valid 50 --energy-weight 1.0 --forces-weight 52.91 --save-every-epoch True --log-tb False --print-freq 1 --student-epochs 500 --student-learning-rate 0.0005 --student-features 32 --student-max-degree 0 --student-num-iterations 2 --student-num-basis-functions 16 --student-cutoff 5.0 --student-charges False --student-zbl False --convert-to-ev True --window-size 10 --stride 10 --train-fraction 0.95 --seeds 42 43 44 --metrics gzip_bytes_cart gzip_bytes_zmat gzip_bytes_soap
+        (command exited with non-zero exit code)
+[Thu May 28 12:43:14 2026]
+rule run_selection:
+    output: checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_soap_ws10_st10_seed43/result_summary.json, checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_gzip_bytes_soap_ws10_st10_seed43.done
+    jobid: 10
+    reason: Missing output files: checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_soap_ws10_st10_seed43/result_summary.json
+    wildcards: run_name=rmd17_aspirin_split01_gzip_bytes_soap_ws10_st10_seed43
+    resources: tmpdir=<TBD>
+Shell command: python -m src.snakemake_runner run-selection --selection-name gzip_bytes_soap_ws10_seed43 --output-json checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_soap_ws10_st10_seed43/result_summary.json --done-file checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_gzip_bytes_soap_ws10_st10_seed43.done --molecule rmd17_aspirin --data-path /scicore/home/meuwly/boitti0000/data/rmd17/npz_data/rmd17_aspirin.npz --splits-dir '' --split-id 1 --ckpt-root checkpoints/rmd17_aspirin --num-epochs 1000 --batch-size 50 --learning-rate 0.001 --n-train 950 --n-valid 50 --energy-weight 1.0 --forces-weight 52.91 --save-every-epoch True --log-tb False --print-freq 1 --student-epochs 500 --student-learning-rate 0.0005 --student-features 32 --student-max-degree 0 --student-num-iterations 2 --student-num-basis-functions 16 --student-cutoff 5.0 --student-charges False --student-zbl False --convert-to-ev True --window-size 10 --stride 10 --train-fraction 0.95 --seeds 42 43 44 --metrics gzip_bytes_cart gzip_bytes_zmat gzip_bytes_soap
+[Thu May 28 12:43:14 2026]
+Error in rule run_selection:
+    message: Error submitting jobscript (exit code 1):
+For further error details see the cluster/cloud log and the log files of the involved rule(s).
+    jobid: 10
+    output: checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_soap_ws10_st10_seed43/result_summary.json, checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_gzip_bytes_soap_ws10_st10_seed43.done
+    shell:
+        python -m src.snakemake_runner run-selection --selection-name gzip_bytes_soap_ws10_seed43 --output-json checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_soap_ws10_st10_seed43/result_summary.json --done-file checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_gzip_bytes_soap_ws10_st10_seed43.done --molecule rmd17_aspirin --data-path /scicore/home/meuwly/boitti0000/data/rmd17/npz_data/rmd17_aspirin.npz --splits-dir '' --split-id 1 --ckpt-root checkpoints/rmd17_aspirin --num-epochs 1000 --batch-size 50 --learning-rate 0.001 --n-train 950 --n-valid 50 --energy-weight 1.0 --forces-weight 52.91 --save-every-epoch True --log-tb False --print-freq 1 --student-epochs 500 --student-learning-rate 0.0005 --student-features 32 --student-max-degree 0 --student-num-iterations 2 --student-num-basis-functions 16 --student-cutoff 5.0 --student-charges False --student-zbl False --convert-to-ev True --window-size 10 --stride 10 --train-fraction 0.95 --seeds 42 43 44 --metrics gzip_bytes_cart gzip_bytes_zmat gzip_bytes_soap
+        (command exited with non-zero exit code)
+[Thu May 28 12:43:14 2026]
+rule run_selection:
+    output: checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_zmat_ws10_st10_seed44/result_summary.json, checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_gzip_bytes_zmat_ws10_st10_seed44.done
+    jobid: 12
+    reason: Missing output files: checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_zmat_ws10_st10_seed44/result_summary.json
+    wildcards: run_name=rmd17_aspirin_split01_gzip_bytes_zmat_ws10_st10_seed44
+    resources: tmpdir=<TBD>
+Shell command: python -m src.snakemake_runner run-selection --selection-name gzip_bytes_zmat_ws10_seed44 --output-json checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_zmat_ws10_st10_seed44/result_summary.json --done-file checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_gzip_bytes_zmat_ws10_st10_seed44.done --molecule rmd17_aspirin --data-path /scicore/home/meuwly/boitti0000/data/rmd17/npz_data/rmd17_aspirin.npz --splits-dir '' --split-id 1 --ckpt-root checkpoints/rmd17_aspirin --num-epochs 1000 --batch-size 50 --learning-rate 0.001 --n-train 950 --n-valid 50 --energy-weight 1.0 --forces-weight 52.91 --save-every-epoch True --log-tb False --print-freq 1 --student-epochs 500 --student-learning-rate 0.0005 --student-features 32 --student-max-degree 0 --student-num-iterations 2 --student-num-basis-functions 16 --student-cutoff 5.0 --student-charges False --student-zbl False --convert-to-ev True --window-size 10 --stride 10 --train-fraction 0.95 --seeds 42 43 44 --metrics gzip_bytes_cart gzip_bytes_zmat gzip_bytes_soap
+[Thu May 28 12:43:14 2026]
+Error in rule run_selection:
+    message: Error submitting jobscript (exit code 1):
+For further error details see the cluster/cloud log and the log files of the involved rule(s).
+    jobid: 12
+    output: checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_zmat_ws10_st10_seed44/result_summary.json, checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_gzip_bytes_zmat_ws10_st10_seed44.done
+    shell:
+        python -m src.snakemake_runner run-selection --selection-name gzip_bytes_zmat_ws10_seed44 --output-json checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_zmat_ws10_st10_seed44/result_summary.json --done-file checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_gzip_bytes_zmat_ws10_st10_seed44.done --molecule rmd17_aspirin --data-path /scicore/home/meuwly/boitti0000/data/rmd17/npz_data/rmd17_aspirin.npz --splits-dir '' --split-id 1 --ckpt-root checkpoints/rmd17_aspirin --num-epochs 1000 --batch-size 50 --learning-rate 0.001 --n-train 950 --n-valid 50 --energy-weight 1.0 --forces-weight 52.91 --save-every-epoch True --log-tb False --print-freq 1 --student-epochs 500 --student-learning-rate 0.0005 --student-features 32 --student-max-degree 0 --student-num-iterations 2 --student-num-basis-functions 16 --student-cutoff 5.0 --student-charges False --student-zbl False --convert-to-ev True --window-size 10 --stride 10 --train-fraction 0.95 --seeds 42 43 44 --metrics gzip_bytes_cart gzip_bytes_zmat gzip_bytes_soap
+        (command exited with non-zero exit code)
+[Thu May 28 12:43:14 2026]
+rule run_selection:
+    output: checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_random_seed43/result_summary.json, checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_random_seed43.done
+    jobid: 3
+    reason: Missing output files: checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_random_seed43/result_summary.json
+    wildcards: run_name=rmd17_aspirin_split01_random_seed43
+    resources: tmpdir=<TBD>
+Shell command: python -m src.snakemake_runner run-selection --selection-name random_seed43 --output-json checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_random_seed43/result_summary.json --done-file checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_random_seed43.done --molecule rmd17_aspirin --data-path /scicore/home/meuwly/boitti0000/data/rmd17/npz_data/rmd17_aspirin.npz --splits-dir '' --split-id 1 --ckpt-root checkpoints/rmd17_aspirin --num-epochs 1000 --batch-size 50 --learning-rate 0.001 --n-train 950 --n-valid 50 --energy-weight 1.0 --forces-weight 52.91 --save-every-epoch True --log-tb False --print-freq 1 --student-epochs 500 --student-learning-rate 0.0005 --student-features 32 --student-max-degree 0 --student-num-iterations 2 --student-num-basis-functions 16 --student-cutoff 5.0 --student-charges False --student-zbl False --convert-to-ev True --window-size 10 --stride 10 --train-fraction 0.95 --seeds 42 43 44 --metrics gzip_bytes_cart gzip_bytes_zmat gzip_bytes_soap
+[Thu May 28 12:43:14 2026]
+Error in rule run_selection:
+    message: Error submitting jobscript (exit code 1):
+For further error details see the cluster/cloud log and the log files of the involved rule(s).
+    jobid: 3
+    output: checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_random_seed43/result_summary.json, checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_random_seed43.done
+    shell:
+        python -m src.snakemake_runner run-selection --selection-name random_seed43 --output-json checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_random_seed43/result_summary.json --done-file checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_random_seed43.done --molecule rmd17_aspirin --data-path /scicore/home/meuwly/boitti0000/data/rmd17/npz_data/rmd17_aspirin.npz --splits-dir '' --split-id 1 --ckpt-root checkpoints/rmd17_aspirin --num-epochs 1000 --batch-size 50 --learning-rate 0.001 --n-train 950 --n-valid 50 --energy-weight 1.0 --forces-weight 52.91 --save-every-epoch True --log-tb False --print-freq 1 --student-epochs 500 --student-learning-rate 0.0005 --student-features 32 --student-max-degree 0 --student-num-iterations 2 --student-num-basis-functions 16 --student-cutoff 5.0 --student-charges False --student-zbl False --convert-to-ev True --window-size 10 --stride 10 --train-fraction 0.95 --seeds 42 43 44 --metrics gzip_bytes_cart gzip_bytes_zmat gzip_bytes_soap
+        (command exited with non-zero exit code)
+[Thu May 28 12:43:14 2026]
+rule run_selection:
+    output: checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_cart_ws10_st10_seed42/result_summary.json, checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_gzip_bytes_cart_ws10_st10_seed42.done
+    jobid: 5
+    reason: Missing output files: checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_cart_ws10_st10_seed42/result_summary.json
+    wildcards: run_name=rmd17_aspirin_split01_gzip_bytes_cart_ws10_st10_seed42
+    resources: tmpdir=<TBD>
+Shell command: python -m src.snakemake_runner run-selection --selection-name gzip_bytes_cart_ws10_seed42 --output-json checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_cart_ws10_st10_seed42/result_summary.json --done-file checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_gzip_bytes_cart_ws10_st10_seed42.done --molecule rmd17_aspirin --data-path /scicore/home/meuwly/boitti0000/data/rmd17/npz_data/rmd17_aspirin.npz --splits-dir '' --split-id 1 --ckpt-root checkpoints/rmd17_aspirin --num-epochs 1000 --batch-size 50 --learning-rate 0.001 --n-train 950 --n-valid 50 --energy-weight 1.0 --forces-weight 52.91 --save-every-epoch True --log-tb False --print-freq 1 --student-epochs 500 --student-learning-rate 0.0005 --student-features 32 --student-max-degree 0 --student-num-iterations 2 --student-num-basis-functions 16 --student-cutoff 5.0 --student-charges False --student-zbl False --convert-to-ev True --window-size 10 --stride 10 --train-fraction 0.95 --seeds 42 43 44 --metrics gzip_bytes_cart gzip_bytes_zmat gzip_bytes_soap
+[Thu May 28 12:43:14 2026]
+Error in rule run_selection:
+    message: Error submitting jobscript (exit code 1):
+For further error details see the cluster/cloud log and the log files of the involved rule(s).
+    jobid: 5
+    output: checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_cart_ws10_st10_seed42/result_summary.json, checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_gzip_bytes_cart_ws10_st10_seed42.done
+    shell:
+        python -m src.snakemake_runner run-selection --selection-name gzip_bytes_cart_ws10_seed42 --output-json checkpoints/rmd17_aspirin/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_cart_ws10_st10_seed42/result_summary.json --done-file checkpoints/rmd17_aspirin/snakemake_done/rmd17_aspirin_split01_gzip_bytes_cart_ws10_st10_seed42.done --molecule rmd17_aspirin --data-path /scicore/home/meuwly/boitti0000/data/rmd17/npz_data/rmd17_aspirin.npz --splits-dir '' --split-id 1 --ckpt-root checkpoints/rmd17_aspirin --num-epochs 1000 --batch-size 50 --learning-rate 0.001 --n-train 950 --n-valid 50 --energy-weight 1.0 --forces-weight 52.91 --save-every-epoch True --log-tb False --print-freq 1 --student-epochs 500 --student-learning-rate 0.0005 --student-features 32 --student-max-degree 0 --student-num-iterations 2 --student-num-basis-functions 16 --student-cutoff 5.0 --student-charges False --student-zbl False --convert-to-ev True --window-size 10 --stride 10 --train-fraction 0.95 --seeds 42 43 44 --metrics gzip_bytes_cart gzip_bytes_zmat gzip_bytes_soap
+        (command exited with non-zero exit code)
+Terminating processes on user request, this might take some time.
