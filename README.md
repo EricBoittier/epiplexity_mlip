@@ -20,8 +20,18 @@ Set `teacher_noise.enabled: false` to run only the baseline matrix.
 
 Plot aggregated results (after `experiment_results.json` exists):
 
-- `make plot-results`
-- Or: `.venv/bin/python -m src.plot_experiment_results --results-json checkpoints/rmd17_aspirin/experiment_results.json`
+- Local (after `make plot-setup` or a working project `.venv`): `make plot-results`
+- **SciCORE / cluster:** use the same Python as training (`mmml`), not `epiplexity/.venv` (that venv is often broken on login nodes if it was created elsewhere):
+
+```bash
+# (mmml) env active, from repo root:
+python -m pip install -r requirements-plot.txt   # once, if needed
+python -m src.plot_experiment_results \
+  --results-json checkpoints/rmd17_aspirin/experiment_results.json \
+  --output-dir checkpoints/rmd17_aspirin/plots
+```
+
+Or explicitly: `/scicore/home/meuwly/boitti0000/mmml/.venv/bin/python -m src.plot_experiment_results ...`
 
 Figures are written to `checkpoints/rmd17_aspirin/plots/` (force RMSE, KL divergences, sample force histograms, plus a CSV summary).
 

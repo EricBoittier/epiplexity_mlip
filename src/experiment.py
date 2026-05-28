@@ -41,6 +41,13 @@ from src.config import (
     TeacherNoiseConfig,
     TrainingConfig,
 )
+from src.histogram_metrics import (
+    PLOT_STATS_ENERGY_KEYS,
+    PLOT_STATS_FORCE_KEYS,
+    compute_normalized_histogram,
+    extract_array_with_fallback,
+    kl_divergence,
+)
 
 patch_chemcoord_for_pandas3()
 
@@ -280,22 +287,6 @@ def center_energies_on_train(
     return train_data, valid_data, test_data, train_e_mean
 
 
-def _extract_array_with_fallback(
-    stats: dict[str, Any],
-    preferred_keys: tuple[str, ...],
-    fallback: np.ndarray,
-    expected_shape: tuple[int, ...],
-) -> tuple[np.ndarray, str]:
-    for key in preferred_keys:
-        if key in stats:
-            arr = np.asarray(stats[key])
-            if arr.size == int(np.prod(expected_shape)):
-                return arr.reshape(expected_shape), key
-            if arr.shape == expected_shape:
-                return arr, key
-    return np.asarray(fallback).reshape(expected_shape), "fallback_ground_truth"
-
-
 def teacher_predict_dataset(
     *,
     model: EF,
@@ -323,43 +314,27 @@ def teacher_predict_dataset(
         batch_size=batch_size,
         do_plot=False,
     )
-    e_pred, e_source = _extract_array_with_fallback(
+    e_pred, e_source = extract_array_with_fallback(
         stats,
-        preferred_keys=("E_pred", "E_preds", "E_hat", "E_model", "pred_E"),
+        preferred_keys=PLOT_STATS_ENERGY_KEYS,
         fallback=np.asarray(dataset["E"]),
         expected_shape=np.asarray(dataset["E"]).shape,
     )
-    f_pred, f_source = _extract_array_with_fallback(
+    f_pred, f_source = extract_array_with_fallback(
         stats,
-        preferred_keys=("F_pred", "F_preds", "F_hat", "F_model", "pred_F"),
+        preferred_keys=PLOT_STATS_FORCE_KEYS,
         fallback=np.asarray(dataset["F"]),
         expected_shape=np.asarray(dataset["F"]).shape,
     )
+    if e_source == "fallback_ground_truth" or f_source == "fallback_ground_truth":
+        print(
+            f"WARNING [{set_name}]: plot_stats missing model predictions "
+            f"(energy={e_source}, forces={f_source}); distillation/KL metrics use ground truth."
+        )
     distill_data = {k: np.copy(v) if isinstance(v, np.ndarray) else v for k, v in dataset.items()}
     distill_data["E"] = e_pred
     distill_data["F"] = f_pred
     return distill_data, {"energy_source": e_source, "forces_source": f_source}
-
-
-def compute_normalized_histogram(
-    values: np.ndarray,
-    *,
-    bins: int,
-    vmin: float,
-    vmax: float,
-) -> tuple[np.ndarray, np.ndarray]:
-    hist, edges = np.histogram(values, bins=bins, range=(vmin, vmax))
-    hist = hist.astype(float)
-    denom = float(hist.sum())
-    if denom <= 0.0:
-        return np.full_like(hist, 1.0 / len(hist), dtype=float), edges
-    return hist / denom, edges
-
-
-def kl_divergence(p: np.ndarray, q: np.ndarray, eps: float = 1e-12) -> float:
-    p_safe = np.clip(p, eps, 1.0)
-    q_safe = np.clip(q, eps, 1.0)
-    return float(np.sum(p_safe * np.log(p_safe / q_safe)))
 
 
 def build_model(model_cfg: ModelConfig, data: dict[str, Any], num_atoms: int) -> EF:

@@ -24,10 +24,11 @@ snakemake-dryrun:
 snakemake-run:
 	$(VENV_DIR)/bin/snakemake -j 2
 
+# Use active interpreter by default (e.g. mmml on SciCORE). Override: make plot-results PLOT_PYTHON=python3
+PLOT_PYTHON ?= python3
+
 plot-setup:
-	$(PYTHON) -m venv $(VENV_DIR)
-	$(VENV_PIP) install --upgrade pip
-	$(VENV_PIP) install -r requirements-plot.txt
+	$(PLOT_PYTHON) -m pip install -r requirements-plot.txt
 
 plot-results: plot-setup
-	$(VENV_PYTHON) -m src.plot_experiment_results
+	$(PLOT_PYTHON) -m src.plot_experiment_results
