@@ -101,6 +101,29 @@ snakemake --profile profiles/scicore --configfile config/experiments_splits1_5.y
 
 Use `--configfile`, not `--config`.
 
+### Storage on SciCORE (use group share, not `$HOME`)
+
+Home (`/scicore/home/meuwly/boitti0000/`) has a small quota. Checkpoints fill it quickly with `save_every_epoch: true`.
+
+Use the SciCORE config (group/lab path + `save_every_epoch: false`):
+
+```bash
+# Find your lab folder (often the PI name):
+ls -d /scicore/home/meuwly/*/
+df -h /scicore/home/meuwly/meuwly
+
+# Edit paths in config/experiments_splits1_5_scicore.yaml if needed, then:
+mkdir -p /scicore/home/meuwly/meuwly/epiplexity/rmd17_aspirin_splits1_5/checkpoints
+
+snakemake --profile profiles/scicore --configfile config/experiments_splits1_5_scicore.yaml
+```
+
+Keep the repo clone in `~/epiplexity`; only checkpoints and aggregates go to the lab path. Optionally delete the old home copy after jobs finish:
+
+```bash
+rm -rf ~/epiplexity/checkpoints/rmd17_aspirin_splits2_5
+```
+
 Compute jobs already use `execution.python_bin` from the YAML (mmml’s Python on SciCORE).
 
 Notes:
