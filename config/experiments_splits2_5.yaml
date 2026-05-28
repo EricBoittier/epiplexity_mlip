@@ -1,0 +1,47 @@
+molecule: rmd17_aspirin
+
+execution:
+  python_bin: /scicore/home/meuwly/boitti0000/mmml/.venv/bin/python
+
+dataset:
+  data_path: /scicore/home/meuwly/boitti0000/data/rmd17/npz_data/rmd17_aspirin.npz
+  splits_dir: ""
+  split_ids: [2, 3, 4, 5]
+  max_structures: null
+  convert_to_ev: true
+
+training:
+  ckpt_root: checkpoints/rmd17_aspirin_splits2_5
+  num_epochs: 1000
+  batch_size: 50
+  learning_rate: 0.001
+  n_train: 950
+  n_valid: 50
+  energy_weight: 1.0
+  forces_weight: 52.91
+  save_every_epoch: true
+  log_tb: false
+  print_freq: 1
+
+student:
+  epochs: 1000
+  learning_rate: 0.001
+  model:
+    features: 32
+    max_degree: 0
+    num_iterations: 2
+    num_basis_functions: 16
+    cutoff: 5.0
+    charges: false
+    zbl: false
+
+selection_matrix:
+  seeds: [42, 43, 44]
+  metrics: [gzip_bytes_cart, gzip_bytes_zmat, gzip_bytes_soap]
+  window_size: 10
+  stride: 10
+  train_fraction: 0.95
+
+outputs:
+  aggregate_results_json: checkpoints/rmd17_aspirin_splits2_5/experiment_results.json
+  snakemake_done_dir: checkpoints/rmd17_aspirin_splits2_5/snakemake_done

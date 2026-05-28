@@ -38,6 +38,13 @@ Manual equivalent:
 
 When running on cluster, workflow jobs use `execution.python_bin` from `config/experiments.yaml` (default: `.venv/bin/python`) to ensure the compute nodes use the same environment.
 
+To run a separate multi-split experiment (splits 2..5) without touching the current split-1 run:
+
+- `.venv/bin/snakemake --profile profiles/scicore --configfile config/experiments_splits2_5.yaml`
+
+This writes to:
+- `checkpoints/rmd17_aspirin_splits2_5/`
+
 ## Run on SciCORE Slurm
 
 This repository includes a Snakemake profile at `profiles/scicore/` with Slurm headers matching your template:

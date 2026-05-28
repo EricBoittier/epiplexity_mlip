@@ -12,8 +12,14 @@ def selection_names():
     return names
 
 
-def run_name(selection_name):
-    split_id = int(config["dataset"]["split_id"])
+def split_ids():
+    dataset_cfg = config["dataset"]
+    if "split_ids" in dataset_cfg and dataset_cfg["split_ids"]:
+        return [int(s) for s in dataset_cfg["split_ids"]]
+    return [int(dataset_cfg["split_id"])]
+
+
+def run_name(selection_name, split_id):
     molecule = config["molecule"]
     if selection_name.startswith("random_seed"):
         seed = selection_name.split("random_seed", 1)[1]
@@ -27,8 +33,13 @@ def run_name(selection_name):
 
 
 SEL_NAMES = selection_names()
-RUN_NAMES = [run_name(sel) for sel in SEL_NAMES]
-RUN_TO_SEL = {run_name(sel): sel for sel in SEL_NAMES}
+SPLIT_IDS = split_ids()
+RUN_NAMES = [run_name(sel, split_id) for split_id in SPLIT_IDS for sel in SEL_NAMES]
+RUN_TO_META = {
+    run_name(sel, split_id): {"selection_name": sel, "split_id": split_id}
+    for split_id in SPLIT_IDS
+    for sel in SEL_NAMES
+}
 DONE_DIR = config["outputs"]["snakemake_done_dir"]
 AGG_JSON = config["outputs"]["aggregate_results_json"]
 CKPT_ROOT = config["training"]["ckpt_root"]
@@ -45,11 +56,11 @@ rule run_selection:
         result_json=f"{CKPT_ROOT}/experiment_metadata/{{run_name}}/result_summary.json",
         done=f"{DONE_DIR}/{{run_name}}.done",
     params:
-        selection_name=lambda wc: RUN_TO_SEL[wc.run_name],
+        selection_name=lambda wc: RUN_TO_META[wc.run_name]["selection_name"],
+        split_id=lambda wc: RUN_TO_META[wc.run_name]["split_id"],
         molecule=config["molecule"],
         data_path=config["dataset"]["data_path"],
         splits_dir=config["dataset"]["splits_dir"],
-        split_id=config["dataset"]["split_id"],
         ckpt_root=config["training"]["ckpt_root"],
         num_epochs=config["training"]["num_epochs"],
         batch_size=config["training"]["batch_size"],
