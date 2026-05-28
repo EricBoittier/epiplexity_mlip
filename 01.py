@@ -11,6 +11,7 @@ gzip_bytes_soap.
 from __future__ import annotations
 
 import json
+import uuid
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Iterable, Literal
@@ -119,6 +120,19 @@ class ExperimentConfig:
     dataset: DatasetConfig = field(default_factory=DatasetConfig)
     training: TrainingConfig = field(default_factory=TrainingConfig)
     model: ModelConfig = field(default_factory=ModelConfig)
+    student_model: ModelConfig = field(
+        default_factory=lambda: ModelConfig(
+            features=32,
+            max_degree=0,
+            num_iterations=2,
+            num_basis_functions=16,
+            cutoff=5.0,
+            charges=False,
+            zbl=False,
+        )
+    )
+    student_epochs: int = 500
+    student_learning_rate: float = 5e-4
     selections: tuple[SelectionConfig, ...] = field(default_factory=tuple)
 
 
@@ -318,6 +332,8 @@ def make_selected_data(
 
     train_data = subset_arrays(official_train_pool_data, train_idx)
     valid_data = subset_arrays(official_train_pool_data, valid_idx)
+    train_data["idx"] = np.asarray(train_idx)
+    valid_data["idx"] = np.asarray(valid_idx)
 
     metadata["n_train"] = int(len(train_data["E"]))
     metadata["n_valid"] = int(len(valid_data["E"]))
@@ -331,13 +347,96 @@ def center_energies_on_train(
     train_data: dict[str, Any],
     valid_data: dict[str, Any],
     test_data: dict[str, Any],
-) -> float:
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], float]:
     """Subtract train-set mean energy from train/valid/test in place."""
     train_e_mean = float(np.mean(train_data["E"]))
     train_data["E"] = train_data["E"] - train_e_mean
     valid_data["E"] = valid_data["E"] - train_e_mean
     test_data["E"] = test_data["E"] - train_e_mean
-    return train_e_mean
+    return train_data, valid_data, test_data, train_e_mean
+
+
+def _extract_array_with_fallback(
+    stats: dict[str, Any],
+    preferred_keys: tuple[str, ...],
+    fallback: np.ndarray,
+    expected_shape: tuple[int, ...],
+) -> tuple[np.ndarray, str]:
+    for key in preferred_keys:
+        if key in stats:
+            arr = np.asarray(stats[key])
+            if arr.size == int(np.prod(expected_shape)):
+                return arr.reshape(expected_shape), key
+            if arr.shape == expected_shape:
+                return arr, key
+    return np.asarray(fallback).reshape(expected_shape), "fallback_ground_truth"
+
+
+def teacher_predict_dataset(
+    *,
+    model: EF,
+    ema_params: Any,
+    dataset: dict[str, Any],
+    batch_size: int,
+    num_atoms: int,
+    seed: int,
+    set_name: str,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    key_eval, _ = jax.random.split(jax.random.PRNGKey(seed))
+    batches = prepare_batches_jit(
+        key_eval,
+        dataset,
+        batch_size,
+        data_keys=("R", "Z", "F", "E", "N"),
+        num_atoms=num_atoms,
+    )
+    stats = plot_stats(
+        batches,
+        model,
+        ema_params,
+        _set=set_name,
+        do_kde=False,
+        batch_size=batch_size,
+        do_plot=False,
+    )
+    e_pred, e_source = _extract_array_with_fallback(
+        stats,
+        preferred_keys=("E_pred", "E_preds", "E_hat", "E_model", "pred_E"),
+        fallback=np.asarray(dataset["E"]),
+        expected_shape=np.asarray(dataset["E"]).shape,
+    )
+    f_pred, f_source = _extract_array_with_fallback(
+        stats,
+        preferred_keys=("F_pred", "F_preds", "F_hat", "F_model", "pred_F"),
+        fallback=np.asarray(dataset["F"]),
+        expected_shape=np.asarray(dataset["F"]).shape,
+    )
+
+    distill_data = {k: np.copy(v) if isinstance(v, np.ndarray) else v for k, v in dataset.items()}
+    distill_data["E"] = e_pred
+    distill_data["F"] = f_pred
+    return distill_data, {"energy_source": e_source, "forces_source": f_source}
+
+
+def compute_normalized_histogram(
+    values: np.ndarray,
+    *,
+    bins: int,
+    vmin: float,
+    vmax: float,
+) -> tuple[np.ndarray, np.ndarray]:
+    hist, edges = np.histogram(values, bins=bins, range=(vmin, vmax))
+    hist = hist.astype(float)
+    denom = float(hist.sum())
+    if denom <= 0.0:
+        return np.full_like(hist, 1.0 / len(hist), dtype=float), edges
+    return hist / denom, edges
+
+
+def kl_divergence(p: np.ndarray, q: np.ndarray, eps: float = 1e-12) -> float:
+    p_safe = np.clip(p, eps, 1.0)
+    q_safe = np.clip(q, eps, 1.0)
+    return float(np.sum(p_safe * np.log(p_safe / q_safe)))
 
 
 def build_model(model_cfg: ModelConfig, data: dict[str, Any], num_atoms: int) -> EF:
@@ -369,6 +468,7 @@ def train_one_experiment(
     splits_dir: Path,
     num_atoms: int,
 ) -> dict[str, Any]:
+    run_uuid = str(uuid.uuid4())
     run_name = selection.run_name(config.molecule, config.dataset.split_id)
     run_output_dir = config.training.ckpt_root / "experiment_metadata" / run_name
     run_output_dir.mkdir(parents=True, exist_ok=True)
@@ -380,7 +480,9 @@ def train_one_experiment(
     )
     test_data = {k: np.copy(v) if isinstance(v, np.ndarray) else v for k, v in test_data_uncentered.items()}
 
-    train_e_mean = center_energies_on_train(train_data, valid_data, test_data)
+    train_data, valid_data, test_data, train_e_mean = center_energies_on_train(
+        train_data, valid_data, test_data
+    )
 
     print("\n" + "=" * 80)
     print(f"Run: {run_name}")
@@ -411,6 +513,7 @@ def train_one_experiment(
                 **selection_metadata,
                 "train_e_mean": train_e_mean,
                 "splits_dir": str(splits_dir),
+                "run_uuid": run_uuid,
             },
             f,
             indent=2,
@@ -442,7 +545,7 @@ def train_one_experiment(
     )
 
     run_ckpt_dir = latest_run_dir(config.training.ckpt_root, run_name)
-    metrics = evaluate_test_set(
+    teacher_metrics = evaluate_test_set(
         model=model,
         ema_params=ema_params,
         test_data=test_data,
@@ -456,12 +559,154 @@ def train_one_experiment(
         eval_dir=config.training.ckpt_root / f"test_eval_{run_name}",
     )
 
+    teacher_train_targets, teacher_train_meta = teacher_predict_dataset(
+        model=model,
+        ema_params=ema_params,
+        dataset=train_data,
+        batch_size=config.training.batch_size,
+        num_atoms=num_atoms,
+        seed=selection.seed + 2,
+        set_name=f"Teacher train reevaluation | {run_name}",
+    )
+    teacher_valid_targets, teacher_valid_meta = teacher_predict_dataset(
+        model=model,
+        ema_params=ema_params,
+        dataset=valid_data,
+        batch_size=config.training.batch_size,
+        num_atoms=num_atoms,
+        seed=selection.seed + 3,
+        set_name=f"Teacher valid reevaluation | {run_name}",
+    )
+
+    np.savez(
+        run_output_dir / "teacher_distillation_targets.npz",
+        train_E=teacher_train_targets["E"],
+        train_F=teacher_train_targets["F"],
+        train_idx=teacher_train_targets.get("idx", np.arange(len(teacher_train_targets["E"]))),
+        valid_E=teacher_valid_targets["E"],
+        valid_F=teacher_valid_targets["F"],
+        valid_idx=teacher_valid_targets.get("idx", np.arange(len(teacher_valid_targets["E"]))),
+    )
+
+    student_run_name = f"{run_name}_student"
+    student_key = jax.random.PRNGKey(selection.seed + 1000)
+    student_model = build_model(config.student_model, data, num_atoms)
+    student_ema_params, student_best_loss = train_model(
+        key=student_key,
+        model=student_model,
+        train_data=teacher_train_targets,
+        valid_data=teacher_valid_targets,
+        num_epochs=config.student_epochs,
+        learning_rate=config.student_learning_rate,
+        batch_size=config.training.batch_size,
+        num_atoms=num_atoms,
+        energy_weight=config.training.energy_weight,
+        forces_weight=config.training.forces_weight,
+        data_keys=("R", "Z", "F", "E", "N"),
+        name=student_run_name,
+        ckpt_dir=config.training.ckpt_root,
+        best=True,
+        save_every_epoch=config.training.save_every_epoch,
+        batch_method="default",
+        log_tb=config.training.log_tb,
+        print_freq=config.training.print_freq,
+    )
+    student_ckpt_dir = latest_run_dir(config.training.ckpt_root, student_run_name)
+    student_metrics = evaluate_test_set(
+        model=student_model,
+        ema_params=student_ema_params,
+        test_data=test_data,
+        batch_size=config.training.batch_size,
+        num_atoms=num_atoms,
+        seed=selection.seed + 1001,
+        run_name=student_run_name,
+        split_id=config.dataset.split_id,
+        splits_dir=splits_dir,
+        run_ckpt_dir=student_ckpt_dir,
+        eval_dir=config.training.ckpt_root / f"test_eval_{student_run_name}",
+    )
+
+    teacher_test_pred, teacher_test_meta = teacher_predict_dataset(
+        model=model,
+        ema_params=ema_params,
+        dataset=test_data,
+        batch_size=config.training.batch_size,
+        num_atoms=num_atoms,
+        seed=selection.seed + 4,
+        set_name=f"Teacher test reevaluation | {run_name}",
+    )
+    student_test_pred, student_test_meta = teacher_predict_dataset(
+        model=student_model,
+        ema_params=student_ema_params,
+        dataset=test_data,
+        batch_size=config.training.batch_size,
+        num_atoms=num_atoms,
+        seed=selection.seed + 1002,
+        set_name=f"Student test reevaluation | {student_run_name}",
+    )
+
+    teacher_force = np.asarray(teacher_test_pred["F"]).reshape(-1)
+    student_force = np.asarray(student_test_pred["F"]).reshape(-1)
+    force_min = float(min(np.min(teacher_force), np.min(student_force)))
+    force_max = float(max(np.max(teacher_force), np.max(student_force)))
+    if np.isclose(force_min, force_max):
+        force_max = force_min + 1e-6
+    n_bins = 128
+    teacher_hist, edges = compute_normalized_histogram(
+        teacher_force, bins=n_bins, vmin=force_min, vmax=force_max
+    )
+    student_hist, _ = compute_normalized_histogram(
+        student_force, bins=n_bins, vmin=force_min, vmax=force_max
+    )
+    kl_t_to_s = kl_divergence(teacher_hist, student_hist)
+    kl_s_to_t = kl_divergence(student_hist, teacher_hist)
+
+    student_valid_curve_df = (
+        collect_checkpoint_valid_losses(student_ckpt_dir, every=1)
+        if student_ckpt_dir is not None
+        else pd.DataFrame()
+    )
+    student_auc_excess_valid_loss = float("nan")
+    if not student_valid_curve_df.empty and "valid_loss" in student_valid_curve_df.columns:
+        valid_curve = student_valid_curve_df["valid_loss"].dropna().to_numpy(dtype=float)
+        if len(valid_curve) > 0:
+            summary_df = summarize_validation_curves({"student_valid_loss": valid_curve})
+            student_auc_excess_valid_loss = float(summary_df.iloc[0]["auc_excess_valid_loss"])
+
     result = {
         "run_name": run_name,
+        "run_uuid": run_uuid,
         "best_loss": float(best_loss),
         "run_ckpt_dir": str(run_ckpt_dir) if run_ckpt_dir else None,
         "metadata_dir": str(run_output_dir),
-        **metrics,
+        "teacher": {
+            "best_loss": float(best_loss),
+            "run_ckpt_dir": str(run_ckpt_dir) if run_ckpt_dir else None,
+            "test_metrics": teacher_metrics,
+            "train_target_source": teacher_train_meta,
+            "valid_target_source": teacher_valid_meta,
+            "test_target_source": teacher_test_meta,
+        },
+        "student": {
+            "run_name": student_run_name,
+            "best_loss": float(student_best_loss),
+            "run_ckpt_dir": str(student_ckpt_dir) if student_ckpt_dir else None,
+            "test_metrics": student_metrics,
+            "test_target_source": student_test_meta,
+            "auc_excess_valid_loss": student_auc_excess_valid_loss,
+        },
+        "distillation_metrics": {
+            "kl_teacher_to_student_test_force_hist": kl_t_to_s,
+            "kl_student_to_teacher_test_force_hist": kl_s_to_t,
+            "force_hist_bins": n_bins,
+            "force_hist_range": [force_min, force_max],
+            "teacher_hist_sum": float(teacher_hist.sum()),
+            "student_hist_sum": float(student_hist.sum()),
+            "teacher_hist": teacher_hist.tolist(),
+            "student_hist": student_hist.tolist(),
+            "hist_bin_edges": edges.tolist(),
+        },
+        **teacher_metrics,
     }
 
     with open(run_output_dir / "result_summary.json", "w") as f:
