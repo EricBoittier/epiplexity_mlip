@@ -61,12 +61,11 @@ Manual equivalent:
 
 When running on cluster, workflow jobs use `execution.python_bin` from `config/experiments.yaml` (default: `.venv/bin/python`) to ensure the compute nodes use the same environment.
 
-To run a separate multi-split experiment (splits 2..5) without touching the current split-1 run:
+To run splits 1–5 in one workflow:
 
-- `.venv/bin/snakemake --profile profiles/scicore --configfile config/experiments_splits2_5.yaml`
+- `snakemake --profile profiles/scicore --configfile config/experiments_splits1_5.yaml`
 
-This writes to:
-- `checkpoints/rmd17_aspirin_splits2_5/`
+(Uses checkpoint dir from that config file.)
 
 ## Run on SciCORE Slurm
 
@@ -81,9 +80,28 @@ This repository includes a Snakemake profile at `profiles/scicore/` with Slurm h
 - `--partition=rtx4090`
 - `--gres=gpu:1`
 
-Run:
+Run from `~/epiplexity` with the **mmml** environment (do not use `epiplexity/.venv` on the cluster — it is often broken on login nodes):
 
-- `.venv/bin/snakemake --profile profiles/scicore`
+```bash
+conda activate mmml   # or: source /scicore/home/meuwly/boitti0000/mmml/.venv/bin/activate
+cd ~/epiplexity
+
+# optional: install snakemake into mmml once
+python -m pip install -r requirements-snakemake.txt
+
+snakemake --profile profiles/scicore -n
+snakemake --profile profiles/scicore -j 16
+```
+
+Another config (example):
+
+```bash
+snakemake --profile profiles/scicore --configfile config/experiments_splits1_5.yaml
+```
+
+Use `--configfile`, not `--config`.
+
+Compute jobs already use `execution.python_bin` from the YAML (mmml’s Python on SciCORE).
 
 Notes:
 

@@ -1,2 +1,4 @@
 snakemake>=8
 snakemake-executor-plugin-cluster-generic>=1
+matplotlib>=3.8
+pandas>=2.0

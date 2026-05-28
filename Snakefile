@@ -111,7 +111,11 @@ rule run_selection:
         python_bin=PYTHON_BIN,
         resume=RESUME,
         teacher_noise_scale=lambda wc: RUN_TO_META[wc.run_name]["teacher_noise_scale"],
-        teacher_noise_suffix=lambda wc: RUN_TO_META[wc.run_name]["teacher_noise_suffix"],
+        teacher_noise_suffix_cmd=lambda wc: (
+            f"--teacher-noise-suffix {RUN_TO_META[wc.run_name]['teacher_noise_suffix']}"
+            if RUN_TO_META[wc.run_name]["teacher_noise_suffix"]
+            else ""
+        ),
     wildcard_constraints:
         run_name="|".join(RUN_NAMES),
     shell:
@@ -152,7 +156,7 @@ rule run_selection:
             "--metrics {params.metrics} "
             "--resume {params.resume} "
             "--teacher-noise-scale {params.teacher_noise_scale} "
-            "--teacher-noise-suffix {params.teacher_noise_suffix}"
+            "{params.teacher_noise_suffix_cmd}"
         )
 
 
