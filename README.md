@@ -108,16 +108,14 @@ Home (`/scicore/home/meuwly/boitti0000/`) has a small quota. Checkpoints fill it
 Use the SciCORE config (group/lab path + `save_every_epoch: false`):
 
 ```bash
-# Find your lab folder (often the PI name):
-ls -d /scicore/home/meuwly/*/
-df -h /scicore/home/meuwly/meuwly
-
-# Edit paths in config/experiments_splits1_5_scicore.yaml if needed, then:
-mkdir -p /scicore/home/meuwly/meuwly/epiplexity/rmd17_aspirin_splits1_5/checkpoints
+# Find a path you can write to (/scicore/home/meuwly/meuwly is often PI-only):
+bash scripts/scicore_find_lab_root.sh
 
 cd ~/epiplexity
-source scripts/scicore_use_lab_storage.sh   # .snakemake + logs/slurm -> lab disk
-snakemake --profile profiles/scicore --configfile config/experiments_splits1_5_scicore.yaml
+export SCICORE_LAB_ROOT=/path/marked/WRITABLE/epiplexity/rmd17_aspirin_splits1_5
+rm -rf .snakemake checkpoints   # free home if needed
+source scripts/scicore_use_lab_storage.sh
+snakemake --profile profiles/scicore --configfile config/experiments_splits1_5_scicore.generated.yaml
 ```
 
 Snakemake still writes temp job scripts to `.snakemake/` in the repo; that directory must not live on a full `$HOME`. The script above symlinks it to lab storage.

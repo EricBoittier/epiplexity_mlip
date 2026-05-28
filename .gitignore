@@ -1,4 +1,5 @@
 checkpoints/
+config/*.generated.yaml
 .snakemake/
 logs/slurm/
 .venv/

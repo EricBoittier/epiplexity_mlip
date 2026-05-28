@@ -1,17 +1,17 @@
-# SciCORE: splits 1–5 on lab/group storage (not $HOME).
+# SciCORE: splits 1–5 on lab storage (NOT $HOME).
 #
-# Find your group path:
-#   ls -d /scicore/home/meuwly/*/
-#   df -h /scicore/home/meuwly/meuwly
+# 1) Find a writable directory:
+#      bash scripts/scicore_find_lab_root.sh
+# 2) Set SCICORE_LAB_ROOT to that path + /epiplexity/rmd17_aspirin_splits1_5
+# 3) Replace __SCICORE_LAB_ROOT__ below with that full path (all 3 occurrences).
+# 4) source scripts/scicore_use_lab_storage.sh
+# 5) snakemake --profile profiles/scicore --configfile config/experiments_splits1_5_scicore.yaml
 #
-# Then set SCICORE_RUN_ROOT below and create the directory once.
-#
-# Run:
-#   snakemake --profile profiles/scicore --configfile config/experiments_splits1_5_scicore.yaml
+# Example (only if scripts/scicore_find_lab_root.sh marks it WRITABLE):
+#   /scicore/home/meuwly/boitti0000/GROUP/epiplexity/rmd17_aspirin_splits1_5
 
 molecule: rmd17_aspirin
 
-# Lab share paths (adjust "meuwly" if your GROUP folder name differs).
 execution:
   python_bin: /scicore/home/meuwly/boitti0000/mmml/.venv/bin/python
   resume: true
@@ -24,7 +24,7 @@ dataset:
   convert_to_ev: true
 
 training:
-  ckpt_root: /scicore/home/meuwly/meuwly/epiplexity/rmd17_aspirin_splits1_5/checkpoints
+  ckpt_root: __SCICORE_LAB_ROOT__/checkpoints
   num_epochs: 1000
   batch_size: 50
   learning_rate: 0.001
@@ -56,8 +56,8 @@ selection_matrix:
   train_fraction: 0.95
 
 outputs:
-  aggregate_results_json: /scicore/home/meuwly/meuwly/epiplexity/rmd17_aspirin_splits1_5/checkpoints/experiment_results.json
-  snakemake_done_dir: /scicore/home/meuwly/meuwly/epiplexity/rmd17_aspirin_splits1_5/checkpoints/snakemake_done
+  aggregate_results_json: __SCICORE_LAB_ROOT__/checkpoints/experiment_results.json
+  snakemake_done_dir: __SCICORE_LAB_ROOT__/checkpoints/snakemake_done
 
 teacher_noise:
   enabled: false
