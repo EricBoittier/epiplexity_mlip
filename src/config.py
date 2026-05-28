@@ -38,7 +38,7 @@ class ModelConfig:
     max_degree: int = 0
     num_iterations: int = 3
     num_basis_functions: int = 32
-    cutoff: float = 5.0
+    cutoff: float = 10.0
     charges: bool = False
     zbl: bool = False
 

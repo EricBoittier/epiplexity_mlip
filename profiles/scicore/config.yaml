@@ -1,4 +1,4 @@
-jobs: 50
+jobs: 4
 latency-wait: 60
 printshellcmds: true
 keep-going: true

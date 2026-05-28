@@ -42,7 +42,7 @@ This repository includes a Snakemake profile at `profiles/scicore/` with Slurm h
 
 - `--job-name=GPU_JOB`
 - `--time=01:00:00`
-- `--qos=6hours`
+- `--qos=rtx4090-6hours`
 - `--mem-per-cpu=20G`
 - `--ntasks=1`
 - `--cpus-per-task=2`
@@ -57,6 +57,6 @@ Notes:
 
 - Snakemake 8+ requires executor plugins; this setup uses `cluster-generic` (sbatch/scancel).
 - If you updated from an older setup, rerun `make snakemake-setup` to install/update the plugin.
-- If SciCORE requires partition-specific QoS (for example `rtx4090-6hours`), update `profiles/scicore/jobscript.sh` accordingly.
+- This profile uses partition-specific QoS for RTX4090: `rtx4090-6hours`.
 - The `#SBATCH --array=0-999` line is intentionally not included in the jobscript. Snakemake already submits one Slurm job per workflow job; combining that with a fixed array would create unintended duplicate tasks.
 - Logs go to `logs/slurm/`.
