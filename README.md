@@ -115,7 +115,18 @@ df -h /scicore/home/meuwly/meuwly
 # Edit paths in config/experiments_splits1_5_scicore.yaml if needed, then:
 mkdir -p /scicore/home/meuwly/meuwly/epiplexity/rmd17_aspirin_splits1_5/checkpoints
 
+cd ~/epiplexity
+source scripts/scicore_use_lab_storage.sh   # .snakemake + logs/slurm -> lab disk
 snakemake --profile profiles/scicore --configfile config/experiments_splits1_5_scicore.yaml
+```
+
+Snakemake still writes temp job scripts to `.snakemake/` in the repo; that directory must not live on a full `$HOME`. The script above symlinks it to lab storage.
+
+If home is already full, free a little space first:
+
+```bash
+rm -rf ~/epiplexity/.snakemake ~/epiplexity/checkpoints
+df -h ~
 ```
 
 Keep the repo clone in `~/epiplexity`; only checkpoints and aggregates go to the lab path. Optionally delete the old home copy after jobs finish:
