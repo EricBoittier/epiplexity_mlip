@@ -106,6 +106,16 @@ def _bool_arg(value: str) -> bool:
 
 
 def run_selection(args: argparse.Namespace) -> None:
+    import traceback
+
+    try:
+        _run_selection_impl(args)
+    except Exception:
+        traceback.print_exc()
+        raise
+
+
+def _run_selection_impl(args: argparse.Namespace) -> None:
     selections = build_selection_matrix(
         seeds=args.seeds,
         metrics=args.metrics,

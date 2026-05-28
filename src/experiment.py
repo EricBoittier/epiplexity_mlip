@@ -579,6 +579,24 @@ def train_one_experiment(
         splits_dir=splits_dir,
         num_atoms=num_atoms,
     )
+    if resume and result_summary_path.exists():
+        if resume_signature_path.exists():
+            with open(resume_signature_path) as f:
+                existing_signature = json.load(f)
+            if existing_signature != current_signature:
+                raise ValueError(
+                    "Resume safety check failed: existing run signature does not match current settings. "
+                    "Disable resume for this run or use a different checkpoint root."
+                )
+        with open(result_summary_path) as f:
+            return json.load(f)
+
+    run_ckpt_dir = latest_run_dir(config.training.ckpt_root, run_name)
+    if resume and run_ckpt_dir is not None and not resume_signature_path.exists():
+        raise ValueError(
+            "Resume safety check failed: found teacher checkpoints but no resume_signature.json. "
+            "Disable resume for this run or remove the partial checkpoint directory."
+        )
     if resume and resume_signature_path.exists():
         with open(resume_signature_path) as f:
             existing_signature = json.load(f)
@@ -587,15 +605,6 @@ def train_one_experiment(
                 "Resume safety check failed: existing run signature does not match current settings. "
                 "Disable resume for this run or use a different checkpoint root."
             )
-    if resume and not resume_signature_path.exists():
-        raise ValueError(
-            "Resume safety check failed: missing resume_signature.json for this run. "
-            "To avoid mixing incompatible settings, rerun with resume disabled once, "
-            "or start from a clean checkpoint root."
-        )
-    if resume and result_summary_path.exists():
-        with open(result_summary_path) as f:
-            return json.load(f)
     with open(resume_signature_path, "w") as f:
         json.dump(current_signature, f, indent=2, default=str)
     train_data, valid_data, selection_metadata = make_selected_data(
@@ -648,7 +657,6 @@ def train_one_experiment(
         )
     key = jax.random.PRNGKey(selection.seed)
     model = build_model(config.model, data, num_atoms)
-    run_ckpt_dir = latest_run_dir(config.training.ckpt_root, run_name)
     ema_params, best_loss = (None, None)
     if resume:
         ema_params, best_loss = maybe_resume_ema_params(run_ckpt_dir)
