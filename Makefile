@@ -16,6 +16,7 @@ snakemake-setup:
 		$(VENV_PIP) install --upgrade pip; \
 		$(VENV_PIP) install -r requirements-snakemake.txt; \
 	fi
+	@mkdir -p logs/slurm
 
 snakemake-dryrun:
 	$(VENV_DIR)/bin/snakemake -n

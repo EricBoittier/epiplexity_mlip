@@ -36,6 +36,8 @@ Manual equivalent:
 - `.venv/bin/snakemake -n`
 - `.venv/bin/snakemake -j 2`
 
+When running on cluster, workflow jobs use `execution.python_bin` from `config/experiments.yaml` (default: `.venv/bin/python`) to ensure the compute nodes use the same environment.
+
 ## Run on SciCORE Slurm
 
 This repository includes a Snakemake profile at `profiles/scicore/` with Slurm headers matching your template:
@@ -60,3 +62,4 @@ Notes:
 - This profile uses partition-specific QoS for RTX4090: `rtx4090-6hours`.
 - The `#SBATCH --array=0-999` line is intentionally not included in the jobscript. Snakemake already submits one Slurm job per workflow job; combining that with a fixed array would create unintended duplicate tasks.
 - Logs go to `logs/slurm/`.
+- If Snakemake says `Params have changed since last execution`, that is expected after config changes; it will rerun affected jobs.

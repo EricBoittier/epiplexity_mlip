@@ -32,6 +32,7 @@ RUN_TO_SEL = {run_name(sel): sel for sel in SEL_NAMES}
 DONE_DIR = config["outputs"]["snakemake_done_dir"]
 AGG_JSON = config["outputs"]["aggregate_results_json"]
 CKPT_ROOT = config["training"]["ckpt_root"]
+PYTHON_BIN = config.get("execution", {}).get("python_bin", ".venv/bin/python")
 
 
 rule all:
@@ -75,11 +76,12 @@ rule run_selection:
         seeds=" ".join(str(x) for x in config["selection_matrix"]["seeds"]),
         metrics=" ".join(config["selection_matrix"]["metrics"]),
         convert_to_ev=config["dataset"]["convert_to_ev"],
+        python_bin=PYTHON_BIN,
     wildcard_constraints:
         run_name="|".join(RUN_NAMES),
     shell:
         (
-            "python -m src.snakemake_runner run-selection "
+            "{params.python_bin} -m src.snakemake_runner run-selection "
             "--selection-name {params.selection_name} "
             "--output-json {output.result_json} "
             "--done-file {output.done} "
@@ -121,5 +123,7 @@ rule aggregate:
         expand(f"{CKPT_ROOT}/experiment_metadata/{{run_name}}/result_summary.json", run_name=RUN_NAMES)
     output:
         AGG_JSON
+    params:
+        python_bin=PYTHON_BIN
     shell:
-        "python -m src.snakemake_runner aggregate --input-json {input} --output-json {output}"
+        "{params.python_bin} -m src.snakemake_runner aggregate --input-json {input} --output-json {output}"
