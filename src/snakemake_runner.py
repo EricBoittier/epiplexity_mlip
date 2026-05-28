@@ -196,7 +196,7 @@ def parse_args() -> argparse.Namespace:
     run_parser.add_argument("--student-max-degree", type=int, default=0)
     run_parser.add_argument("--student-num-iterations", type=int, default=2)
     run_parser.add_argument("--student-num-basis-functions", type=int, default=16)
-    run_parser.add_argument("--student-cutoff", type=float, default=5.0)
+    run_parser.add_argument("--student-cutoff", type=float, default=10.0)
     run_parser.add_argument("--student-charges", type=_bool_arg, default=False)
     run_parser.add_argument("--student-zbl", type=_bool_arg, default=False)
 

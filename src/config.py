@@ -94,7 +94,7 @@ class ExperimentConfig:
             max_degree=0,
             num_iterations=2,
             num_basis_functions=16,
-            cutoff=5.0,
+            cutoff=10.0,
             charges=False,
             zbl=False,
         )
