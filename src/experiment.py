@@ -477,11 +477,16 @@ def train_one_experiment(
     test_data_uncentered: dict[str, Any],
     splits_dir: Path,
     num_atoms: int,
+    resume: bool = False,
 ) -> dict[str, Any]:
     run_uuid = str(uuid.uuid4())
     run_name = selection.run_name(config.molecule, config.dataset.split_id)
     run_output_dir = config.training.ckpt_root / "experiment_metadata" / run_name
     run_output_dir.mkdir(parents=True, exist_ok=True)
+    result_summary_path = run_output_dir / "result_summary.json"
+    if resume and result_summary_path.exists():
+        with open(result_summary_path) as f:
+            return json.load(f)
     train_data, valid_data, selection_metadata = make_selected_data(
         official_train_pool_data, selection, config.training
     )
@@ -681,7 +686,7 @@ def train_one_experiment(
         },
         **teacher_metrics,
     }
-    with open(run_output_dir / "result_summary.json", "w") as f:
+    with open(result_summary_path, "w") as f:
         json.dump(result, f, indent=2, default=str)
     return result
 
@@ -700,6 +705,7 @@ def run_experiments(config: ExperimentConfig) -> None:
             test_data_uncentered=test_data,
             splits_dir=splits_dir,
             num_atoms=num_atoms,
+            resume=False,
         )
         all_results.append(result)
         results_path = config.training.ckpt_root / "experiment_results.json"

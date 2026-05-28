@@ -70,3 +70,4 @@ Notes:
 - The `#SBATCH --array=0-999` line is intentionally not included in the jobscript. Snakemake already submits one Slurm job per workflow job; combining that with a fixed array would create unintended duplicate tasks.
 - Logs go to `logs/slurm/`.
 - If Snakemake says `Params have changed since last execution`, that is expected after config changes; it will rerun affected jobs.
+- `execution.resume: true` (default) makes `run-selection` reuse an existing `result_summary.json` for the same run name, so forced reruns do not retrain completed runs.

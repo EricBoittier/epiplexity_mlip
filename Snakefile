@@ -44,6 +44,7 @@ DONE_DIR = config["outputs"]["snakemake_done_dir"]
 AGG_JSON = config["outputs"]["aggregate_results_json"]
 CKPT_ROOT = config["training"]["ckpt_root"]
 PYTHON_BIN = config.get("execution", {}).get("python_bin", ".venv/bin/python")
+RESUME = config.get("execution", {}).get("resume", True)
 
 
 rule all:
@@ -88,6 +89,7 @@ rule run_selection:
         metrics=" ".join(config["selection_matrix"]["metrics"]),
         convert_to_ev=config["dataset"]["convert_to_ev"],
         python_bin=PYTHON_BIN,
+        resume=RESUME,
     wildcard_constraints:
         run_name="|".join(RUN_NAMES),
     shell:
@@ -125,7 +127,8 @@ rule run_selection:
             "--stride {params.stride} "
             "--train-fraction {params.train_fraction} "
             "--seeds {params.seeds} "
-            "--metrics {params.metrics}"
+            "--metrics {params.metrics} "
+            "--resume {params.resume}"
         )
 
 

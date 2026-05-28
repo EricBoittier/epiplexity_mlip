@@ -2,6 +2,7 @@ molecule: rmd17_aspirin
 
 execution:
   python_bin: /scicore/home/meuwly/boitti0000/mmml/.venv/bin/python
+  resume: true
 
 dataset:
   data_path: /scicore/home/meuwly/boitti0000/data/rmd17/npz_data/rmd17_aspirin.npz

@@ -120,6 +120,7 @@ def run_selection(args: argparse.Namespace) -> None:
         test_data_uncentered=test_data,
         splits_dir=splits_dir,
         num_atoms=num_atoms,
+        resume=bool(args.resume),
     )
     output_path = Path(args.output_json)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -185,6 +186,7 @@ def parse_args() -> argparse.Namespace:
     run_parser.add_argument("--train-fraction", type=float, default=0.95)
     run_parser.add_argument("--seeds", nargs="+", type=int, required=True)
     run_parser.add_argument("--metrics", nargs="+", required=True)
+    run_parser.add_argument("--resume", type=_bool_arg, default=False)
 
     agg_parser = subparsers.add_parser("aggregate")
     agg_parser.add_argument("--input-json", nargs="+", required=True)
