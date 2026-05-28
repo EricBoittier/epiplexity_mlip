@@ -69,7 +69,7 @@ def build_config_from_args(args: argparse.Namespace, selection: SelectionConfig)
         save_every_epoch=bool(args.save_every_epoch),
         log_tb=bool(args.log_tb),
         print_freq=args.print_freq,
-        ckpt_root=Path(args.ckpt_root),
+        ckpt_root=Path(args.ckpt_root).resolve(),
     )
     student_model_cfg = ModelConfig(
         features=args.student_features,

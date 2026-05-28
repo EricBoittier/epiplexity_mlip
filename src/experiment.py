@@ -436,7 +436,7 @@ def collect_checkpoint_valid_losses(ckpt_dir: Path, every: int = 10) -> pd.DataF
     ckpts = sorted(ckpts, key=epoch_from_path)
     rows: list[dict[str, Any]] = []
     for path in ckpts[::every]:
-        restored = orbax.checkpoint.PyTreeCheckpointer().restore(path)
+        restored = orbax.checkpoint.PyTreeCheckpointer().restore(path.resolve())
         objectives = restored.get("objectives", {})
         rows.append(
             {
