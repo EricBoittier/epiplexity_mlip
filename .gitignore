@@ -1,5 +1,6 @@
 checkpoints/
 config/*.generated.yaml
+.scicore_lab_env
 .snakemake/
 logs/slurm/
 .venv/

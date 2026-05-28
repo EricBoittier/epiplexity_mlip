@@ -112,10 +112,11 @@ Use the SciCORE config (group/lab path + `save_every_epoch: false`):
 bash scripts/scicore_find_lab_root.sh
 
 cd ~/epiplexity
-export SCICORE_LAB_ROOT=/path/marked/WRITABLE/epiplexity/rmd17_aspirin_splits1_5
+export SCICORE_LAB_ROOT=/scicore/home/meuwly/boitti0000/epiplexity_storage/rmd17_aspirin_splits1_5
 rm -rf .snakemake checkpoints   # free home if needed
-source scripts/scicore_use_lab_storage.sh
-snakemake --profile profiles/scicore --configfile config/experiments_splits1_5_scicore.generated.yaml
+bash scripts/scicore_use_lab_storage.sh
+source .scicore_lab_env
+snakemake --profile profiles/scicore --configfile "${GENERATED_CONFIG}"
 ```
 
 Snakemake still writes temp job scripts to `.snakemake/` in the repo; that directory must not live on a full `$HOME`. The script above symlinks it to lab storage.

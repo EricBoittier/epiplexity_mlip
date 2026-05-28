@@ -1,14 +1,36 @@
 #!/usr/bin/env bash
 # Point Snakemake metadata and temp files at lab storage (not $HOME).
 #
-# Usage (from repo root):
-#   bash scripts/scicore_find_lab_root.sh          # discover a writable path
-#   export SCICORE_LAB_ROOT=/writable/path/epiplexity/rmd17_aspirin_splits1_5
-#   source scripts/scicore_use_lab_storage.sh
+# Recommended (won't close SSH if you use set -e in .bashrc):
+#   export SCICORE_LAB_ROOT=/scicore/home/meuwly/boitti0000/epiplexity_storage/rmd17_aspirin_splits1_5
+#   bash scripts/scicore_use_lab_storage.sh
+#   source .scicore_lab_env
 #
-# /scicore/home/meuwly/meuwly is often PI-only — use a path marked WRITABLE above.
+# Or: set +e && source scripts/scicore_use_lab_storage.sh
 
-set -euo pipefail
+_relocate_to_symlink() {
+  local path="$1"
+  local target="$2"
+  local parent
+  parent="$(dirname "$path")"
+  mkdir -p "$parent" "$(dirname "$target")" "$target"
+
+  if [[ -L "$path" ]]; then
+    rm -f "$path"
+  elif [[ -d "$path" ]]; then
+    local bak="${path}.bak.$(date +%Y%m%d_%H%M%S)"
+    echo "Moving ${path} -> ${bak}"
+    if ! mv "$path" "$bak" 2>/dev/null; then
+      echo "WARN: could not move ${path} (NFS busy?). Try: scancel -u \$USER; wait; rm -rf ${path}" >&2
+      return 1
+    fi
+  elif [[ -e "$path" ]]; then
+    rm -f "$path"
+  fi
+
+  ln -sfn "$target" "$path"
+  return 0
+}
 
 _resolve_lab_root() {
   if [[ -n "${SCICORE_LAB_ROOT:-}" ]]; then
@@ -35,44 +57,51 @@ _resolve_lab_root() {
   return 1
 }
 
-if ! LAB_ROOT="$(_resolve_lab_root)"; then
-  echo "ERROR: No writable SCICORE_LAB_ROOT set and no default path worked." >&2
-  echo "Run:  bash scripts/scicore_find_lab_root.sh" >&2
-  echo "Then: export SCICORE_LAB_ROOT=/writable/.../epiplexity/rmd17_aspirin_splits1_5" >&2
-  return 1 2>/dev/null || exit 1
+_main() {
+  local rc=0
+  if ! LAB_ROOT="$(_resolve_lab_root)"; then
+    echo "ERROR: Set SCICORE_LAB_ROOT or run: bash scripts/scicore_find_lab_root.sh" >&2
+    return 1
+  fi
+
+  export SCICORE_LAB_ROOT="${LAB_ROOT}"
+  mkdir -p "${LAB_ROOT}/snakemake/.snakemake" "${LAB_ROOT}/logs/slurm" "${LAB_ROOT}/tmp" \
+    "${LAB_ROOT}/checkpoints"
+
+  _relocate_to_symlink ".snakemake" "${LAB_ROOT}/snakemake/.snakemake" || rc=1
+  _relocate_to_symlink "logs/slurm" "${LAB_ROOT}/logs/slurm" || rc=1
+
+  export TMPDIR="${LAB_ROOT}/tmp"
+  export GENERATED_CONFIG="config/experiments_splits1_5_scicore.generated.yaml"
+  sed "s|__SCICORE_LAB_ROOT__|${SCICORE_LAB_ROOT}|g" \
+    config/experiments_splits1_5_scicore.yaml > "${GENERATED_CONFIG}"
+
+  cat > .scicore_lab_env <<EOF
+export SCICORE_LAB_ROOT='${SCICORE_LAB_ROOT}'
+export TMPDIR='${TMPDIR}'
+export GENERATED_CONFIG='${GENERATED_CONFIG}'
+EOF
+
+  echo "SCICORE_LAB_ROOT=${SCICORE_LAB_ROOT}"
+  echo ".snakemake -> $(readlink .snakemake 2>/dev/null || echo missing)"
+  echo "logs/slurm -> $(readlink logs/slurm 2>/dev/null || echo missing)"
+  echo "TMPDIR=${TMPDIR}"
+  echo "Wrote ${GENERATED_CONFIG} and .scicore_lab_env"
+  echo ""
+  echo "Run:"
+  echo "  source .scicore_lab_env"
+  echo "  snakemake --profile profiles/scicore --configfile \${GENERATED_CONFIG}"
+
+  return "$rc"
+}
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  cd "$(dirname "$0")/.." || exit 1
+  _main
+  exit $?
 fi
 
-export SCICORE_LAB_ROOT="${LAB_ROOT}"
-mkdir -p "${LAB_ROOT}/snakemake" "${LAB_ROOT}/logs/slurm" "${LAB_ROOT}/tmp"
-
-if [[ -d .snakemake && ! -L .snakemake ]]; then
-  echo "Remove home .snakemake first:  rm -rf .snakemake" >&2
-  return 1 2>/dev/null || exit 1
-fi
-rm -f .snakemake
-ln -sfn "${LAB_ROOT}/snakemake/.snakemake" .snakemake
-mkdir -p "${LAB_ROOT}/snakemake/.snakemake"
-
-mkdir -p logs
-if [[ -d logs/slurm && ! -L logs/slurm ]]; then
-  echo "Remove home logs/slurm first:  rm -rf logs/slurm" >&2
-  return 1 2>/dev/null || exit 1
-fi
-rm -f logs/slurm
-ln -sfn "${LAB_ROOT}/logs/slurm" logs/slurm
-mkdir -p "${LAB_ROOT}/logs/slurm"
-
-export TMPDIR="${LAB_ROOT}/tmp"
-
-GENERATED_CONFIG="config/experiments_splits1_5_scicore.generated.yaml"
-sed "s|__SCICORE_LAB_ROOT__|${SCICORE_LAB_ROOT}|g" \
-  config/experiments_splits1_5_scicore.yaml > "${GENERATED_CONFIG}"
-
-echo "SCICORE_LAB_ROOT=${SCICORE_LAB_ROOT}"
-echo ".snakemake -> $(readlink .snakemake)"
-echo "logs/slurm -> $(readlink logs/slurm)"
-echo "TMPDIR=${TMPDIR}"
-echo "Wrote ${GENERATED_CONFIG}"
-echo ""
-echo "Run:"
-echo "  snakemake --profile profiles/scicore --configfile ${GENERATED_CONFIG}"
+# Sourced: do not use 'return 1' with set -e (can disconnect SSH)
+set +e
+_main
+return $?
