@@ -12,7 +12,7 @@
 
 set -euo pipefail
 
-# No ${...} here — Snakemake jobscripts use Python .format() and choke on braces.
+# Avoid brace characters in this file; Snakemake expands it with Python str.format.
 export TMPDIR=/tmp
 if [ -n "$SLURM_TMPDIR" ]; then
   export TMPDIR="$SLURM_TMPDIR"
