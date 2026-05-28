@@ -4,6 +4,8 @@ printshellcmds: true
 keep-going: true
 rerun-incomplete: true
 
-# Submit each Snakemake job to Slurm.
-cluster: "sbatch"
+# Snakemake >=8 uses executor plugins (not --cluster).
+executor: cluster-generic
+cluster-generic-submit-cmd: "sbatch"
+cluster-generic-cancel-cmd: "scancel"
 jobscript: "profiles/scicore/jobscript.sh"

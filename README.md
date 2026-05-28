@@ -55,5 +55,7 @@ Run:
 
 Notes:
 
+- Snakemake 8+ requires executor plugins; this setup uses `cluster-generic` (sbatch/scancel).
+- If you updated from an older setup, rerun `make snakemake-setup` to install/update the plugin.
 - The `#SBATCH --array=0-999` line is intentionally not included in the jobscript. Snakemake already submits one Slurm job per workflow job; combining that with a fixed array would create unintended duplicate tasks.
 - Logs go to `logs/slurm/`.
