@@ -410,6 +410,26 @@ def maybe_resume_ema_params(run_ckpt_dir: Path | None) -> tuple[Any | None, floa
     return ema_params, best_loss
 
 
+def _normalize_signature_value(value: Any) -> Any:
+    if isinstance(value, Path):
+        return str(value.resolve())
+    if isinstance(value, dict):
+        return {k: _normalize_signature_value(v) for k, v in value.items()}
+    if isinstance(value, tuple):
+        return [_normalize_signature_value(v) for v in value]
+    if isinstance(value, list):
+        return [_normalize_signature_value(v) for v in value]
+    return value
+
+
+def _normalize_resume_signature(signature: dict[str, Any]) -> dict[str, Any]:
+    normalized = _normalize_signature_value(signature)
+    training = normalized.get("training")
+    if isinstance(training, dict):
+        training.pop("ckpt_root", None)
+    return normalized
+
+
 def _resume_signature(
     *,
     config: ExperimentConfig,
@@ -417,29 +437,33 @@ def _resume_signature(
     splits_dir: Path,
     num_atoms: int,
 ) -> dict[str, Any]:
-    return {
-        "molecule": config.molecule,
-        "dataset": {
-            "data_path": str(config.dataset.data_path),
-            "rmd17_splits_dir": str(config.dataset.rmd17_splits_dir) if config.dataset.rmd17_splits_dir else None,
-            "split_id": int(config.dataset.split_id),
-            "max_structures": config.dataset.max_structures,
-            "convert_to_ev": bool(config.dataset.convert_to_ev),
-            "resolved_splits_dir": str(splits_dir),
-        },
-        "selection": asdict(selection),
-        "training": asdict(config.training),
-        "model": asdict(config.model),
-        "student_model": asdict(config.student_model),
-        "student_epochs": int(config.student_epochs),
-        "student_learning_rate": float(config.student_learning_rate),
-        "teacher_noise": (
-            None
-            if config.teacher_noise is None
-            else {"scale": float(config.teacher_noise.scale), "run_suffix": config.teacher_noise.run_suffix}
-        ),
-        "num_atoms": int(num_atoms),
-    }
+    training = asdict(config.training)
+    training.pop("ckpt_root", None)
+    return _normalize_resume_signature(
+        {
+            "molecule": config.molecule,
+            "dataset": {
+                "data_path": str(config.dataset.data_path),
+                "rmd17_splits_dir": str(config.dataset.rmd17_splits_dir) if config.dataset.rmd17_splits_dir else None,
+                "split_id": int(config.dataset.split_id),
+                "max_structures": config.dataset.max_structures,
+                "convert_to_ev": bool(config.dataset.convert_to_ev),
+                "resolved_splits_dir": str(splits_dir),
+            },
+            "selection": asdict(selection),
+            "training": training,
+            "model": asdict(config.model),
+            "student_model": asdict(config.student_model),
+            "student_epochs": int(config.student_epochs),
+            "student_learning_rate": float(config.student_learning_rate),
+            "teacher_noise": (
+                None
+                if config.teacher_noise is None
+                else {"scale": float(config.teacher_noise.scale), "run_suffix": config.teacher_noise.run_suffix}
+            ),
+            "num_atoms": int(num_atoms),
+        }
+    )
 
 
 def evaluate_test_set(
@@ -597,7 +621,7 @@ def train_one_experiment(
         if resume_signature_path.exists():
             with open(resume_signature_path) as f:
                 existing_signature = json.load(f)
-            if existing_signature != current_signature:
+            if _normalize_resume_signature(existing_signature) != current_signature:
                 raise ValueError(
                     "Resume safety check failed: existing run signature does not match current settings. "
                     "Disable resume for this run or use a different checkpoint root."
@@ -614,13 +638,13 @@ def train_one_experiment(
     if resume and resume_signature_path.exists():
         with open(resume_signature_path) as f:
             existing_signature = json.load(f)
-        if existing_signature != current_signature:
+        if _normalize_resume_signature(existing_signature) != current_signature:
             raise ValueError(
                 "Resume safety check failed: existing run signature does not match current settings. "
                 "Disable resume for this run or use a different checkpoint root."
             )
     with open(resume_signature_path, "w") as f:
-        json.dump(current_signature, f, indent=2, default=str)
+        json.dump(current_signature, f, indent=2)
     train_data, valid_data, selection_metadata = make_selected_data(
         official_train_pool_data, selection, config.training
     )
