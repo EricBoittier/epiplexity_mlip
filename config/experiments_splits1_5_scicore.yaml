@@ -1,10 +1,11 @@
 # SciCORE: train on node /tmp; Snakemake outputs on shared storage (login-visible).
 #
-#   mkdir -p /tmp/epiplexity_mlip/rmd17_aspirin_splits1_5/checkpoints
-#   export SCICORE_LAB_ROOT=~/epiplexity_storage/rmd17_aspirin_splits1_5  # or bash scripts/scicore_use_lab_storage.sh
+#   export SCICORE_LAB_ROOT=~/epiplexity_storage/rmd17_aspirin_splits1_5_1to1
+#   mkdir -p /tmp/epiplexity_mlip/rmd17_aspirin_splits1_5_1to1/checkpoints
 #   mkdir -p "${SCICORE_LAB_ROOT}/checkpoints"
+#   bash scripts/scicore_use_lab_storage.sh && source .scicore_lab_env
 #   cd ~/epiplexity && export TMPDIR=/tmp
-#   snakemake --profile profiles/scicore --configfile config/experiments_splits1_5_scicore.yaml -j 4
+#   snakemake --profile profiles/scicore --configfile "${GENERATED_CONFIG}" -j 4
 #
 # Each job copies experiment_metadata/<run_name>/ and writes .done + result_summary.json
 # under outputs.shared_ckpt_root when training finishes.
@@ -26,12 +27,12 @@ model:
   cutoff: 12.0
 
 training:
-  ckpt_root: /tmp/epiplexity_mlip/rmd17_aspirin_splits1_5/checkpoints
+  ckpt_root: /tmp/epiplexity_mlip/rmd17_aspirin_splits1_5_1to1/checkpoints
   num_epochs: 1000
   batch_size: 50
   learning_rate: 0.001
-  n_train: 950
-  n_valid: 50
+  n_train: 500
+  n_valid: 500
   energy_weight: 1.0
   forces_weight: 52.91
   save_every_epoch: false
@@ -56,7 +57,7 @@ selection_matrix:
   metrics: [gzip_bytes_cart, gzip_bytes_zmat, gzip_bytes_soap]
   window_size: 10
   stride: 10
-  train_fraction: 0.95
+  train_fraction: 0.5
 
 outputs:
   shared_ckpt_root: __SCICORE_LAB_ROOT__/checkpoints
