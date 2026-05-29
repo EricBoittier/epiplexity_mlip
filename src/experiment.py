@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import difflib
 import json
 import uuid
 from dataclasses import asdict
@@ -410,9 +411,18 @@ def maybe_resume_ema_params(run_ckpt_dir: Path | None) -> tuple[Any | None, floa
     return ema_params, best_loss
 
 
+def _signature_path(value: Path | str | None) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    return str(Path(text).resolve())
+
+
 def _normalize_signature_value(value: Any) -> Any:
     if isinstance(value, Path):
-        return str(value.resolve())
+        return _signature_path(value)
     if isinstance(value, dict):
         return {k: _normalize_signature_value(v) for k, v in value.items()}
     if isinstance(value, tuple):
@@ -427,14 +437,41 @@ def _normalize_resume_signature(signature: dict[str, Any]) -> dict[str, Any]:
     training = normalized.get("training")
     if isinstance(training, dict):
         training.pop("ckpt_root", None)
+    dataset = normalized.get("dataset")
+    if isinstance(dataset, dict):
+        dataset.pop("resolved_splits_dir", None)
+        if "data_path" in dataset:
+            dataset["data_path"] = _signature_path(dataset["data_path"])
+        if "rmd17_splits_dir" in dataset:
+            dataset["rmd17_splits_dir"] = _signature_path(dataset["rmd17_splits_dir"])
     return normalized
+
+
+def _resume_signatures_match(existing: dict[str, Any], current: dict[str, Any]) -> bool:
+    return _normalize_resume_signature(existing) == current
+
+
+def _format_resume_signature_diff(existing: dict[str, Any], current: dict[str, Any]) -> str:
+    stored = json.dumps(_normalize_resume_signature(existing), indent=2, sort_keys=True).splitlines()
+    live = json.dumps(current, indent=2, sort_keys=True).splitlines()
+    diff = difflib.unified_diff(stored, live, fromfile="stored resume_signature.json", tofile="current run", lineterm="")
+    text = "\n".join(diff)
+    return text if text else "(no diff lines produced; compare normalized payloads manually)"
+
+
+def _raise_resume_signature_mismatch(existing: dict[str, Any], current: dict[str, Any]) -> None:
+    diff = _format_resume_signature_diff(existing, current)
+    raise ValueError(
+        "Resume safety check failed: existing run signature does not match current settings. "
+        "Disable resume for this run, remove experiment_metadata for this run_name, or align config. "
+        f"Diff:\n{diff}"
+    )
 
 
 def _resume_signature(
     *,
     config: ExperimentConfig,
     selection: SelectionConfig,
-    splits_dir: Path,
     num_atoms: int,
 ) -> dict[str, Any]:
     training = asdict(config.training)
@@ -443,12 +480,11 @@ def _resume_signature(
         {
             "molecule": config.molecule,
             "dataset": {
-                "data_path": str(config.dataset.data_path),
-                "rmd17_splits_dir": str(config.dataset.rmd17_splits_dir) if config.dataset.rmd17_splits_dir else None,
+                "data_path": _signature_path(config.dataset.data_path),
+                "rmd17_splits_dir": _signature_path(config.dataset.rmd17_splits_dir),
                 "split_id": int(config.dataset.split_id),
                 "max_structures": config.dataset.max_structures,
                 "convert_to_ev": bool(config.dataset.convert_to_ev),
-                "resolved_splits_dir": str(splits_dir),
             },
             "selection": asdict(selection),
             "training": training,
@@ -614,18 +650,14 @@ def train_one_experiment(
     current_signature = _resume_signature(
         config=config,
         selection=selection,
-        splits_dir=splits_dir,
         num_atoms=num_atoms,
     )
     if resume and result_summary_path.exists():
         if resume_signature_path.exists():
             with open(resume_signature_path) as f:
                 existing_signature = json.load(f)
-            if _normalize_resume_signature(existing_signature) != current_signature:
-                raise ValueError(
-                    "Resume safety check failed: existing run signature does not match current settings. "
-                    "Disable resume for this run or use a different checkpoint root."
-                )
+            if not _resume_signatures_match(existing_signature, current_signature):
+                _raise_resume_signature_mismatch(existing_signature, current_signature)
         with open(result_summary_path) as f:
             return json.load(f)
 
@@ -638,11 +670,8 @@ def train_one_experiment(
     if resume and resume_signature_path.exists():
         with open(resume_signature_path) as f:
             existing_signature = json.load(f)
-        if _normalize_resume_signature(existing_signature) != current_signature:
-            raise ValueError(
-                "Resume safety check failed: existing run signature does not match current settings. "
-                "Disable resume for this run or use a different checkpoint root."
-            )
+        if not _resume_signatures_match(existing_signature, current_signature):
+            _raise_resume_signature_mismatch(existing_signature, current_signature)
     with open(resume_signature_path, "w") as f:
         json.dump(current_signature, f, indent=2)
     train_data, valid_data, selection_metadata = make_selected_data(
