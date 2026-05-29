@@ -42,9 +42,27 @@ def test_plot_stats_kcal_to_ev_conversion() -> None:
         e_source="predEs",
         f_source="predFs",
         convert_to_ev=True,
+        reference_e=np.array([1.0]),
+        reference_f=np.array([0.5]),
     )
     assert np.isclose(e_ev[0], 1.0, rtol=0.02)
     assert np.isclose(f_ev[0], 100.0 * EV_PER_KCAL, rtol=0.02)
+
+
+def test_plot_stats_skips_conversion_when_pred_matches_dataset_scale() -> None:
+    e_ev = np.array([0.5, 0.6])
+    f_ev = np.array([0.2, 0.25, 0.3])
+    e_out, f_out = plot_stats_arrays_to_dataset_units(
+        e_ev,
+        f_ev,
+        e_source="predEs",
+        f_source="predFs",
+        convert_to_ev=True,
+        reference_e=np.array([0.52, 0.58]),
+        reference_f=np.array([0.21, 0.24, 0.29]),
+    )
+    assert np.allclose(e_out, e_ev)
+    assert np.allclose(f_out, f_ev)
 
 
 def test_kl_sparse_histograms_not_masked_to_zero() -> None:

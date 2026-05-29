@@ -44,6 +44,33 @@ def compute_normalized_histogram(
     return hist / denom, edges
 
 
+def _median_abs_scale(values: np.ndarray) -> float:
+    arr = np.asarray(values, dtype=float)
+    if arr.size == 0:
+        return 0.0
+    positive = np.abs(arr[np.abs(arr) > 0.0])
+    if positive.size > 0:
+        return float(np.median(positive))
+    return float(np.median(np.abs(arr)))
+
+
+def _pred_already_in_dataset_units(
+    pred: np.ndarray,
+    reference: np.ndarray,
+    *,
+    label: str,
+) -> bool:
+    """True when predFs/predEs are already on the same scale as the dataset arrays."""
+    ref_scale = _median_abs_scale(reference)
+    pred_scale = _median_abs_scale(pred)
+    if ref_scale <= 0.0 or pred_scale <= 0.0:
+        return False
+    ratio = pred_scale / ref_scale
+    if 0.5 <= ratio <= 2.0:
+        return True
+    return False
+
+
 def plot_stats_arrays_to_dataset_units(
     e_pred: np.ndarray,
     f_pred: np.ndarray,
@@ -51,15 +78,36 @@ def plot_stats_arrays_to_dataset_units(
     e_source: str,
     f_source: str,
     convert_to_ev: bool,
+    reference_e: np.ndarray | None = None,
+    reference_f: np.ndarray | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """plot_stats returns kcal/mol; RMD17 loaders use eV when convert_to_ev is set."""
+    """Align plot_stats predictions with dataset label units.
+
+    Older PhysNetJax plot_stats returns kcal/mol and kcal/mol/A; newer builds may
+    already return predictions in the same units as the input batches. When
+    convert_to_ev is set, only apply kcal→eV scaling if predictions are not already
+    on the dataset scale (checked against reference E/F from the loader).
+    """
     e_out = np.asarray(e_pred, dtype=float)
     f_out = np.asarray(f_pred, dtype=float)
-    if convert_to_ev:
-        if e_source != "fallback_ground_truth":
+    if not convert_to_ev:
+        return e_out, f_out
+
+    if e_source != "fallback_ground_truth" and reference_e is not None:
+        if _pred_already_in_dataset_units(e_out, reference_e, label="energy"):
+            pass
+        else:
             e_out = e_out * EV_PER_KCAL
-        if f_source != "fallback_ground_truth":
+    elif e_source != "fallback_ground_truth":
+        e_out = e_out * EV_PER_KCAL
+
+    if f_source != "fallback_ground_truth" and reference_f is not None:
+        if _pred_already_in_dataset_units(f_out, reference_f, label="forces"):
+            pass
+        else:
             f_out = f_out * EV_PER_KCAL
+    elif f_source != "fallback_ground_truth":
+        f_out = f_out * EV_PER_KCAL
     return e_out, f_out
 
 

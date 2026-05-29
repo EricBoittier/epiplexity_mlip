@@ -335,13 +335,28 @@ def teacher_predict_dataset(
             f"WARNING [{set_name}]: plot_stats missing model predictions "
             f"(energy={e_source}, forces={f_source}); distillation/KL metrics use ground truth."
         )
+    reference_e = np.asarray(dataset["E"])
+    reference_f = np.asarray(dataset["F"])
     e_pred, f_pred = plot_stats_arrays_to_dataset_units(
         e_pred,
         f_pred,
         e_source=e_source,
         f_source=f_source,
         convert_to_ev=convert_to_ev,
+        reference_e=reference_e,
+        reference_f=reference_f,
     )
+    if f_source != "fallback_ground_truth":
+        ref_scale = float(np.median(np.abs(reference_f)))
+        pred_scale = float(np.median(np.abs(f_pred)))
+        if ref_scale > 0.0 and pred_scale > 0.0:
+            ratio = pred_scale / ref_scale
+            if ratio < 0.25 or ratio > 4.0:
+                print(
+                    f"WARNING [{set_name}]: teacher force scale mismatch after unit alignment "
+                    f"(median |F_pred|={pred_scale:.4g}, median |F_ref|={ref_scale:.4g}, ratio={ratio:.4g}). "
+                    "Check plot_stats / convert_to_ev handling."
+                )
     distill_data = {k: np.copy(v) if isinstance(v, np.ndarray) else v for k, v in dataset.items()}
     distill_data["E"] = e_pred
     distill_data["F"] = f_pred
