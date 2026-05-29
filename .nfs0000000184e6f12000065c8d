@@ -1,0 +1,58 @@
+nohup: ignoring input
+Using profile profiles/scicore for setting default command line arguments.
+Config file config/experiments.yaml is extended by additional config specified via the command line.
+host: login12
+Building DAG of jobs...
+Using shell: /usr/bin/bash
+Provided remote nodes: 4
+Job stats:
+job              count
+-------------  -------
+run_selection       56
+aggregate            1
+all                  1
+total               58
+
+Select jobs to execute...
+Execute 4 jobs...
+
+[Thu May 28 22:54:38 2026]
+rule run_selection:
+    output: /scicore/home/meuwly/boitti0000/epiplexity_storage/rmd17_aspirin_splits1_5/checkpoints/experiment_metadata/rmd17_aspirin_split03_random_seed43/result_summary.json, /scicore/home/meuwly/boitti0000/epiplexity_storage/rmd17_aspirin_splits1_5/checkpoints/snakemake_done/rmd17_aspirin_split03_random_seed43.done
+    jobid: 27
+    reason: Code has changed since last execution; Params have changed since last execution: Union of exclusive params before and now across all output: before: '/scicore/home/meuwly/boitti0000/epiplexity_storage/rmd17_aspirin_splits1_5/checkpoints',5.0 now: '--shared-ckpt-root /scicore/home/meuwly/boitti0000/epiplexity_storage/rmd17_aspirin_splits1_5/checkpoints','/tmp/epiplexity_mlip/rmd17_aspirin_splits1_5/checkpoints','--save-every-n-epochs 50',12.0 
+    wildcards: run_name=rmd17_aspirin_split03_random_seed43
+    resources: tmpdir=<TBD>
+Shell command: /scicore/home/meuwly/boitti0000/mmml/.venv/bin/python -m src.snakemake_runner run-selection --selection-name random_seed43 --output-json /scicore/home/meuwly/boitti0000/epiplexity_storage/rmd17_aspirin_splits1_5/checkpoints/experiment_metadata/rmd17_aspirin_split03_random_seed43/result_summary.json --done-file /scicore/home/meuwly/boitti0000/epiplexity_storage/rmd17_aspirin_splits1_5/checkpoints/snakemake_done/rmd17_aspirin_split03_random_seed43.done --molecule rmd17_aspirin --data-path /scicore/home/meuwly/boitti0000/data/rmd17/npz_data/rmd17_aspirin.npz --splits-dir '' --split-id 3 --ckpt-root /tmp/epiplexity_mlip/rmd17_aspirin_splits1_5/checkpoints --shared-ckpt-root /scicore/home/meuwly/boitti0000/epiplexity_storage/rmd17_aspirin_splits1_5/checkpoints --num-epochs 1000 --batch-size 50 --learning-rate 0.001 --n-train 950 --n-valid 50 --energy-weight 1.0 --forces-weight 52.91 --save-every-epoch False --save-every-n-epochs 50 --teacher-cutoff 12.0 --log-tb False --print-freq 1 --student-epochs 1000 --student-learning-rate 0.001 --student-features 32 --student-max-degree 0 --student-num-iterations 2 --student-num-basis-functions 16 --student-cutoff 12.0 --student-charges False --student-zbl False --convert-to-ev True --window-size 10 --stride 10 --train-fraction 0.95 --seeds 42 43 44 --metrics gzip_bytes_cart gzip_bytes_zmat gzip_bytes_soap --resume True --teacher-noise-scale 0.0 
+Submitted job 27 with external jobid 'Submitted batch job 12752027'.
+
+[Thu May 28 22:54:38 2026]
+rule run_selection:
+    output: /scicore/home/meuwly/boitti0000/epiplexity_storage/rmd17_aspirin_splits1_5/checkpoints/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_zmat_ws10_st10_seed44/result_summary.json, /scicore/home/meuwly/boitti0000/epiplexity_storage/rmd17_aspirin_splits1_5/checkpoints/snakemake_done/rmd17_aspirin_split01_gzip_bytes_zmat_ws10_st10_seed44.done
+    jobid: 12
+    reason: Code has changed since last execution; Params have changed since last execution: Union of exclusive params before and now across all output: before: '/scicore/home/meuwly/boitti0000/epiplexity_storage/rmd17_aspirin_splits1_5/checkpoints',5.0 now: '--shared-ckpt-root /scicore/home/meuwly/boitti0000/epiplexity_storage/rmd17_aspirin_splits1_5/checkpoints','/tmp/epiplexity_mlip/rmd17_aspirin_splits1_5/checkpoints','--save-every-n-epochs 50',12.0 
+    wildcards: run_name=rmd17_aspirin_split01_gzip_bytes_zmat_ws10_st10_seed44
+    resources: tmpdir=<TBD>
+Shell command: /scicore/home/meuwly/boitti0000/mmml/.venv/bin/python -m src.snakemake_runner run-selection --selection-name gzip_bytes_zmat_ws10_seed44 --output-json /scicore/home/meuwly/boitti0000/epiplexity_storage/rmd17_aspirin_splits1_5/checkpoints/experiment_metadata/rmd17_aspirin_split01_gzip_bytes_zmat_ws10_st10_seed44/result_summary.json --done-file /scicore/home/meuwly/boitti0000/epiplexity_storage/rmd17_aspirin_splits1_5/checkpoints/snakemake_done/rmd17_aspirin_split01_gzip_bytes_zmat_ws10_st10_seed44.done --molecule rmd17_aspirin --data-path /scicore/home/meuwly/boitti0000/data/rmd17/npz_data/rmd17_aspirin.npz --splits-dir '' --split-id 1 --ckpt-root /tmp/epiplexity_mlip/rmd17_aspirin_splits1_5/checkpoints --shared-ckpt-root /scicore/home/meuwly/boitti0000/epiplexity_storage/rmd17_aspirin_splits1_5/checkpoints --num-epochs 1000 --batch-size 50 --learning-rate 0.001 --n-train 950 --n-valid 50 --energy-weight 1.0 --forces-weight 52.91 --save-every-epoch False --save-every-n-epochs 50 --teacher-cutoff 12.0 --log-tb False --print-freq 1 --student-epochs 1000 --student-learning-rate 0.001 --student-features 32 --student-max-degree 0 --student-num-iterations 2 --student-num-basis-functions 16 --student-cutoff 12.0 --student-charges False --student-zbl False --convert-to-ev True --window-size 10 --stride 10 --train-fraction 0.95 --seeds 42 43 44 --metrics gzip_bytes_cart gzip_bytes_zmat gzip_bytes_soap --resume True --teacher-noise-scale 0.0 
+Submitted job 12 with external jobid 'Submitted batch job 12752028'.
+
+[Thu May 28 22:54:38 2026]
+rule run_selection:
+    output: /scicore/home/meuwly/boitti0000/epiplexity_storage/rmd17_aspirin_splits1_5/checkpoints/experiment_metadata/rmd17_aspirin_split05_gzip_bytes_zmat_ws10_st10_seed43/result_summary.json, /scicore/home/meuwly/boitti0000/epiplexity_storage/rmd17_aspirin_splits1_5/checkpoints/snakemake_done/rmd17_aspirin_split05_gzip_bytes_zmat_ws10_st10_seed43.done
+    jobid: 57
+    reason: Code has changed since last execution; Params have changed since last execution: Union of exclusive params before and now across all output: before: '/scicore/home/meuwly/boitti0000/epiplexity_storage/rmd17_aspirin_splits1_5/checkpoints',5.0 now: '--shared-ckpt-root /scicore/home/meuwly/boitti0000/epiplexity_storage/rmd17_aspirin_splits1_5/checkpoints','/tmp/epiplexity_mlip/rmd17_aspirin_splits1_5/checkpoints','--save-every-n-epochs 50',12.0 
+    wildcards: run_name=rmd17_aspirin_split05_gzip_bytes_zmat_ws10_st10_seed43
+    resources: tmpdir=<TBD>
+Shell command: /scicore/home/meuwly/boitti0000/mmml/.venv/bin/python -m src.snakemake_runner run-selection --selection-name gzip_bytes_zmat_ws10_seed43 --output-json /scicore/home/meuwly/boitti0000/epiplexity_storage/rmd17_aspirin_splits1_5/checkpoints/experiment_metadata/rmd17_aspirin_split05_gzip_bytes_zmat_ws10_st10_seed43/result_summary.json --done-file /scicore/home/meuwly/boitti0000/epiplexity_storage/rmd17_aspirin_splits1_5/checkpoints/snakemake_done/rmd17_aspirin_split05_gzip_bytes_zmat_ws10_st10_seed43.done --molecule rmd17_aspirin --data-path /scicore/home/meuwly/boitti0000/data/rmd17/npz_data/rmd17_aspirin.npz --splits-dir '' --split-id 5 --ckpt-root /tmp/epiplexity_mlip/rmd17_aspirin_splits1_5/checkpoints --shared-ckpt-root /scicore/home/meuwly/boitti0000/epiplexity_storage/rmd17_aspirin_splits1_5/checkpoints --num-epochs 1000 --batch-size 50 --learning-rate 0.001 --n-train 950 --n-valid 50 --energy-weight 1.0 --forces-weight 52.91 --save-every-epoch False --save-every-n-epochs 50 --teacher-cutoff 12.0 --log-tb False --print-freq 1 --student-epochs 1000 --student-learning-rate 0.001 --student-features 32 --student-max-degree 0 --student-num-iterations 2 --student-num-basis-functions 16 --student-cutoff 12.0 --student-charges False --student-zbl False --convert-to-ev True --window-size 10 --stride 10 --train-fraction 0.95 --seeds 42 43 44 --metrics gzip_bytes_cart gzip_bytes_zmat gzip_bytes_soap --resume True --teacher-noise-scale 0.0 
+Submitted job 57 with external jobid 'Submitted batch job 12752029'.
+
+[Thu May 28 22:54:38 2026]
+rule run_selection:
+    output: /scicore/home/meuwly/boitti0000/epiplexity_storage/rmd17_aspirin_splits1_5/checkpoints/experiment_metadata/rmd17_aspirin_split03_gzip_bytes_zmat_ws10_st10_seed44/result_summary.json, /scicore/home/meuwly/boitti0000/epiplexity_storage/rmd17_aspirin_splits1_5/checkpoints/snakemake_done/rmd17_aspirin_split03_gzip_bytes_zmat_ws10_st10_seed44.done
+    jobid: 36
+    reason: Code has changed since last execution; Params have changed since last execution: Union of exclusive params before and now across all output: before: '/scicore/home/meuwly/boitti0000/epiplexity_storage/rmd17_aspirin_splits1_5/checkpoints',5.0 now: '--shared-ckpt-root /scicore/home/meuwly/boitti0000/epiplexity_storage/rmd17_aspirin_splits1_5/checkpoints','/tmp/epiplexity_mlip/rmd17_aspirin_splits1_5/checkpoints','--save-every-n-epochs 50',12.0 
+    wildcards: run_name=rmd17_aspirin_split03_gzip_bytes_zmat_ws10_st10_seed44
+    resources: tmpdir=<TBD>
+Shell command: /scicore/home/meuwly/boitti0000/mmml/.venv/bin/python -m src.snakemake_runner run-selection --selection-name gzip_bytes_zmat_ws10_seed44 --output-json /scicore/home/meuwly/boitti0000/epiplexity_storage/rmd17_aspirin_splits1_5/checkpoints/experiment_metadata/rmd17_aspirin_split03_gzip_bytes_zmat_ws10_st10_seed44/result_summary.json --done-file /scicore/home/meuwly/boitti0000/epiplexity_storage/rmd17_aspirin_splits1_5/checkpoints/snakemake_done/rmd17_aspirin_split03_gzip_bytes_zmat_ws10_st10_seed44.done --molecule rmd17_aspirin --data-path /scicore/home/meuwly/boitti0000/data/rmd17/npz_data/rmd17_aspirin.npz --splits-dir '' --split-id 3 --ckpt-root /tmp/epiplexity_mlip/rmd17_aspirin_splits1_5/checkpoints --shared-ckpt-root /scicore/home/meuwly/boitti0000/epiplexity_storage/rmd17_aspirin_splits1_5/checkpoints --num-epochs 1000 --batch-size 50 --learning-rate 0.001 --n-train 950 --n-valid 50 --energy-weight 1.0 --forces-weight 52.91 --save-every-epoch False --save-every-n-epochs 50 --teacher-cutoff 12.0 --log-tb False --print-freq 1 --student-epochs 1000 --student-learning-rate 0.001 --student-features 32 --student-max-degree 0 --student-num-iterations 2 --student-num-basis-functions 16 --student-cutoff 12.0 --student-charges False --student-zbl False --convert-to-ev True --window-size 10 --stride 10 --train-fraction 0.95 --seeds 42 43 44 --metrics gzip_bytes_cart gzip_bytes_zmat gzip_bytes_soap --resume True --teacher-noise-scale 0.0 
+Submitted job 36 with external jobid 'Submitted batch job 12752030'.
+Select jobs to execute...
