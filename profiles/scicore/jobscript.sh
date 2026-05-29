@@ -14,9 +14,11 @@ set -euo pipefail
 
 # Avoid brace characters in this file; Snakemake expands it with Python str.format.
 export TMPDIR=/tmp
-if [ -n "${SLURM_TMPDIR:-}" ]; then
-  export TMPDIR="${SLURM_TMPDIR}"
+_slurm_tmp="$(printenv SLURM_TMPDIR 2>/dev/null || true)"
+if [ -n "$_slurm_tmp" ]; then
+  export TMPDIR="$_slurm_tmp"
 fi
+unset _slurm_tmp
 mkdir -p "$TMPDIR"
 
 hostname
