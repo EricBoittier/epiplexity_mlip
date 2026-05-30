@@ -44,6 +44,6 @@ fi
 
 echo ""
 echo "Pick a WRITABLE path, then:"
-echo "  export SCICORE_LAB_ROOT=/path/you/chose/epiplexity/rmd17_aspirin_splits1_5"
+echo "  export SCICORE_LAB_ROOT=/path/you/chose/epiplexity/rmd17_aspirin_s1to5_ws_metrics_noise"
 echo "  source scripts/scicore_use_lab_storage.sh"
 echo "  # edit config/experiments_splits1_5_scicore.yaml ckpt_root to match"

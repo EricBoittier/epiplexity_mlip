@@ -6,7 +6,7 @@
 #   snakemake --profile profiles/scicore --configfile config/experiments_splits1_5_scicore.yaml
 #
 # Lab storage + generated config (legacy):
-#   export SCICORE_LAB_ROOT=/scicore/home/meuwly/boitti0000/epiplexity_storage/rmd17_aspirin_splits1_5
+#   export SCICORE_LAB_ROOT=/scicore/home/meuwly/boitti0000/epiplexity_storage/rmd17_aspirin_s1to5_ws_metrics_noise
 #   bash scripts/scicore_use_lab_storage.sh
 #   source .scicore_lab_env
 #
@@ -46,10 +46,10 @@ _resolve_lab_root() {
     return 0
   fi
   local candidates=(
-    "/tmp/epiplexity_mlip/rmd17_aspirin_splits1_5"
-    "/scicore/home/meuwly/${USER}/epiplexity_storage/rmd17_aspirin_splits1_5"
-    "/scicore/home/meuwly/${USER}/GROUP/epiplexity/rmd17_aspirin_splits1_5"
-    "/scicore/home/meuwly/${USER}/group/epiplexity/rmd17_aspirin_splits1_5"
+    "/tmp/epiplexity_mlip/rmd17_aspirin_s1to5_ws_metrics_noise"
+    "/scicore/home/meuwly/${USER}/epiplexity_storage/rmd17_aspirin_s1to5_ws_metrics_noise"
+    "/scicore/home/meuwly/${USER}/GROUP/epiplexity/rmd17_aspirin_s1to5_ws_metrics_noise"
+    "/scicore/home/meuwly/${USER}/group/epiplexity/rmd17_aspirin_s1to5_ws_metrics_noise"
   )
   local c
   for c in "${candidates[@]}"; do

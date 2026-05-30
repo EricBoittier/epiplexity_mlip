@@ -88,8 +88,8 @@ Home (`/scicore/home/meuwly/boitti0000/`) has a small quota. Checkpoints fill it
 Use `config/experiments_splits1_5_scicore.yaml` for splits 1–5: heavy Orbax checkpoints on node `/tmp`, Snakemake outputs on shared storage (`outputs.shared_ckpt_root`). Each job syncs `experiment_metadata/<run_name>/` to shared storage when it finishes (and pulls it to `/tmp` on resume).
 
 ```bash
-mkdir -p /tmp/epiplexity_mlip/rmd17_aspirin_splits1_5/checkpoints
-mkdir -p ~/epiplexity_storage/rmd17_aspirin_splits1_5/checkpoints
+mkdir -p /tmp/epiplexity_mlip/rmd17_aspirin_s1to5_ws_metrics_noise/checkpoints
+mkdir -p ~/epiplexity_storage/rmd17_aspirin_s1to5_ws_metrics_noise/checkpoints
 cd ~/epiplexity
 export TMPDIR=/tmp
 snakemake --profile profiles/scicore --configfile config/experiments_splits1_5_scicore.yaml -j 40
@@ -99,7 +99,7 @@ Legacy lab-storage helper (symlinks `.snakemake/` only):
 
 ```bash
 bash scripts/scicore_find_lab_root.sh
-export SCICORE_LAB_ROOT=/scicore/home/meuwly/boitti0000/epiplexity_storage/rmd17_aspirin_splits1_5
+export SCICORE_LAB_ROOT=/scicore/home/meuwly/boitti0000/epiplexity_storage/rmd17_aspirin_s1to5_ws_metrics_noise
 bash scripts/scicore_use_lab_storage.sh
 source .scicore_lab_env
 snakemake --profile profiles/scicore --configfile "${GENERATED_CONFIG}"

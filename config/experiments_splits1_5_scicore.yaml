@@ -1,7 +1,7 @@
 # SciCORE: train on node /tmp; Snakemake outputs on shared storage (login-visible).
 #
-#   export SCICORE_LAB_ROOT=~/epiplexity_storage/rmd17_aspirin_splits1_5_1to1
-#   mkdir -p /tmp/epiplexity_mlip/rmd17_aspirin_splits1_5_1to1/checkpoints
+#   export SCICORE_LAB_ROOT=~/epiplexity_storage/rmd17_aspirin_s1to5_ws_metrics_noise
+#   mkdir -p /tmp/epiplexity_mlip/rmd17_aspirin_s1to5_ws_metrics_noise/checkpoints
 #   mkdir -p "${SCICORE_LAB_ROOT}/checkpoints"
 #   bash scripts/scicore_use_lab_storage.sh && source .scicore_lab_env
 #   cd ~/epiplexity && export TMPDIR=/tmp
@@ -27,7 +27,7 @@ model:
   cutoff: 12.0
 
 training:
-  ckpt_root: /tmp/epiplexity_mlip/rmd17_aspirin_splits1_5_1to1/checkpoints
+  ckpt_root: /tmp/epiplexity_mlip/rmd17_aspirin_s1to5_ws_metrics_noise/checkpoints
   num_epochs: 1000
   batch_size: 10
   learning_rate: 0.001
