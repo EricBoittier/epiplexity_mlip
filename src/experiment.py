@@ -5,7 +5,10 @@ import json
 import uuid
 from dataclasses import asdict
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Iterable, Literal
+
+TrainingPhase = Literal["all", "teacher", "student"]
+TEACHER_PHASE_DONE_FILENAME = "teacher_phase_done.json"
 
 import ase
 import jax
@@ -51,6 +54,7 @@ from src.histogram_metrics import (
     kl_divergence,
     plot_stats_arrays_to_dataset_units,
 )
+from src.training_resume import epoch_from_checkpoint_path, latest_epoch_checkpoint, latest_checkpoint_epoch_from_paths
 
 patch_chemcoord_for_pandas3()
 
@@ -386,20 +390,27 @@ def latest_run_dir(ckpt_root: Path, run_name: str) -> Path | None:
     return run_dirs[-1] if run_dirs else None
 
 
-def latest_epoch_checkpoint(run_ckpt_dir: Path) -> Path | None:
-    """Return the latest epoch checkpoint directory inside a run directory."""
-    epoch_dirs = [p for p in run_ckpt_dir.glob("epoch-*") if p.is_dir()]
-    if not epoch_dirs:
-        return None
+def latest_checkpoint_epoch(run_ckpt_dir: Path | None) -> int | None:
+    """Return the highest saved epoch index for a run, or None if no checkpoints."""
+    path_epoch = latest_checkpoint_epoch_from_paths(run_ckpt_dir)
+    if path_epoch is None or run_ckpt_dir is None:
+        return path_epoch
+    latest_epoch_path = latest_epoch_checkpoint(run_ckpt_dir)
+    if latest_epoch_path is None:
+        return path_epoch
+    try:
+        restored = orbax.checkpoint.PyTreeCheckpointer().restore(latest_epoch_path.resolve())
+        stored_epoch = restored.get("epoch")
+        if stored_epoch is not None:
+            return max(path_epoch, int(stored_epoch))
+    except Exception:
+        pass
+    return path_epoch
 
-    def epoch_from_path(path: Path) -> int:
-        try:
-            return int(path.name.split("-", 1)[1])
-        except (IndexError, ValueError):
-            return -1
 
-    epoch_dirs = sorted(epoch_dirs, key=epoch_from_path)
-    return epoch_dirs[-1]
+def is_training_complete(run_ckpt_dir: Path | None, target_epochs: int) -> bool:
+    latest_epoch = latest_checkpoint_epoch(run_ckpt_dir)
+    return latest_epoch is not None and latest_epoch >= target_epochs
 
 
 def maybe_resume_ema_params(run_ckpt_dir: Path | None) -> tuple[Any | None, float | None]:
@@ -424,6 +435,110 @@ def maybe_resume_ema_params(run_ckpt_dir: Path | None) -> tuple[Any | None, floa
     best_loss_val = restored.get("best_loss")
     best_loss = float(best_loss_val) if best_loss_val is not None else float("nan")
     return ema_params, best_loss
+
+
+def train_or_resume_model(
+    *,
+    phase_label: str,
+    resume: bool,
+    run_ckpt_dir: Path | None,
+    target_epochs: int,
+    key: Any,
+    model: EF,
+    train_data: dict[str, Any],
+    valid_data: dict[str, Any],
+    learning_rate: float,
+    batch_size: int,
+    num_atoms: int,
+    energy_weight: float,
+    forces_weight: float,
+    run_name: str,
+    ckpt_dir: Path,
+    save_every_epoch: bool | int,
+    log_tb: bool,
+    print_freq: int,
+) -> tuple[Any, float]:
+    """Run train_model, skipping only when the latest checkpoint reached target_epochs."""
+    latest_epoch = latest_checkpoint_epoch(run_ckpt_dir)
+
+    if resume and is_training_complete(run_ckpt_dir, target_epochs):
+        ema_params, best_loss = maybe_resume_ema_params(run_ckpt_dir)
+        if ema_params is not None:
+            print(
+                f"{phase_label}: training complete at epoch {latest_epoch} "
+                f"(target {target_epochs}); skipping train_model"
+            )
+            return ema_params, float(best_loss)
+
+    restart = bool(resume and latest_epoch is not None and latest_epoch > 0)
+    if restart:
+        print(
+            f"{phase_label}: resuming train_model from epoch {latest_epoch} "
+            f"toward {target_epochs} (restart=True)"
+        )
+    else:
+        print(f"{phase_label}: starting train_model for {target_epochs} epochs (restart=False)")
+
+    ema_params, best_loss = train_model(
+        key=key,
+        model=model,
+        train_data=train_data,
+        valid_data=valid_data,
+        num_epochs=target_epochs,
+        learning_rate=learning_rate,
+        batch_size=batch_size,
+        num_atoms=num_atoms,
+        energy_weight=energy_weight,
+        forces_weight=forces_weight,
+        data_keys=("R", "Z", "F", "E", "N"),
+        name=run_name,
+        ckpt_dir=ckpt_dir,
+        best=True,
+        restart=restart,
+        save_every_epoch=save_every_epoch,
+        batch_method="default",
+        log_tb=log_tb,
+        print_freq=print_freq,
+    )
+    return ema_params, float(best_loss)
+
+
+def load_distillation_targets(
+    run_output_dir: Path,
+    train_data: dict[str, Any],
+    valid_data: dict[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Rebuild distill train/valid dicts from a saved teacher_distillation_targets.npz."""
+    npz_path = run_output_dir / "teacher_distillation_targets.npz"
+    if not npz_path.exists():
+        raise FileNotFoundError(f"Missing distillation targets: {npz_path}")
+    saved = np.load(npz_path)
+    teacher_train = {k: np.copy(v) if isinstance(v, np.ndarray) else v for k, v in train_data.items()}
+    teacher_valid = {k: np.copy(v) if isinstance(v, np.ndarray) else v for k, v in valid_data.items()}
+    teacher_train["E"] = saved["train_E"]
+    teacher_train["F"] = saved["train_F"]
+    teacher_valid["E"] = saved["valid_E"]
+    teacher_valid["F"] = saved["valid_F"]
+    return teacher_train, teacher_valid
+
+
+def _experiment_training_complete(
+    *,
+    config: ExperimentConfig,
+    ckpt_root: Path,
+    run_name: str,
+    run_output_dir: Path,
+) -> bool:
+    student_run_name = f"{run_name}_student"
+    teacher_dir = latest_run_dir(ckpt_root, run_name)
+    student_dir = latest_run_dir(ckpt_root, student_run_name)
+    if not is_training_complete(teacher_dir, config.training.num_epochs):
+        return False
+    if not is_training_complete(student_dir, config.student_epochs):
+        return False
+    if not (run_output_dir / "teacher_distillation_targets.npz").exists():
+        return False
+    return True
 
 
 def _signature_path(value: Path | str | None) -> str | None:
@@ -608,7 +723,7 @@ def collect_checkpoint_valid_losses(ckpt_dir: Path, every: int = 10) -> pd.DataF
     ckpts = [p for p in ckpt_dir.glob("*") if p.is_dir() or p.exists()]
 
     def epoch_from_path(path: Path) -> int:
-        return int(path.name.split("-")[-1])
+        return epoch_from_checkpoint_path(path)
 
     ckpts = sorted(ckpts, key=epoch_from_path)
     rows: list[dict[str, Any]] = []
@@ -655,26 +770,53 @@ def train_one_experiment(
     splits_dir: Path,
     num_atoms: int,
     resume: bool = False,
+    phase: TrainingPhase = "all",
 ) -> dict[str, Any]:
-    run_uuid = str(uuid.uuid4())
     run_name = selection.run_name(config.molecule, config.dataset.split_id)
     run_output_dir = config.training.ckpt_root / "experiment_metadata" / run_name
     run_output_dir.mkdir(parents=True, exist_ok=True)
     result_summary_path = run_output_dir / "result_summary.json"
+    teacher_phase_done_path = run_output_dir / TEACHER_PHASE_DONE_FILENAME
     resume_signature_path = run_output_dir / "resume_signature.json"
     current_signature = _resume_signature(
         config=config,
         selection=selection,
         num_atoms=num_atoms,
     )
-    if resume and result_summary_path.exists():
+    if resume and phase == "teacher" and teacher_phase_done_path.exists():
         if resume_signature_path.exists():
             with open(resume_signature_path) as f:
                 existing_signature = json.load(f)
             if not _resume_signatures_match(existing_signature, current_signature):
                 _raise_resume_signature_mismatch(existing_signature, current_signature)
-        with open(result_summary_path) as f:
+        with open(teacher_phase_done_path) as f:
             return json.load(f)
+    if resume and phase in ("all", "student") and result_summary_path.exists():
+        if _experiment_training_complete(
+            config=config,
+            ckpt_root=config.training.ckpt_root,
+            run_name=run_name,
+            run_output_dir=run_output_dir,
+        ):
+            if resume_signature_path.exists():
+                with open(resume_signature_path) as f:
+                    existing_signature = json.load(f)
+                if not _resume_signatures_match(existing_signature, current_signature):
+                    _raise_resume_signature_mismatch(existing_signature, current_signature)
+            with open(result_summary_path) as f:
+                return json.load(f)
+        print(
+            f"Resume: {result_summary_path.name} exists but training is incomplete; "
+            "continuing teacher/student training."
+        )
+
+    selection_metadata_path = run_output_dir / "selection_metadata.json"
+    if resume and selection_metadata_path.exists():
+        with open(selection_metadata_path) as f:
+            loaded = json.load(f)
+        run_uuid = str(loaded.get("run_uuid") or uuid.uuid4())
+    else:
+        run_uuid = str(uuid.uuid4())
 
     run_ckpt_dir = latest_run_dir(config.training.ckpt_root, run_name)
     if resume and run_ckpt_dir is not None and not resume_signature_path.exists():
@@ -739,101 +881,142 @@ def train_one_experiment(
         )
     key = jax.random.PRNGKey(selection.seed)
     model = build_model(config.model, data, num_atoms)
-    ema_params, best_loss = (None, None)
-    if resume:
-        ema_params, best_loss = maybe_resume_ema_params(run_ckpt_dir)
-    if ema_params is None:
-        ema_params, best_loss = train_model(
+    run_ckpt_dir = latest_run_dir(config.training.ckpt_root, run_name)
+    save_every = resolve_save_every_epoch(config.training)
+    if phase in ("all", "teacher"):
+        ema_params, best_loss = train_or_resume_model(
+            phase_label=f"Teacher | {run_name}",
+            resume=resume,
+            run_ckpt_dir=run_ckpt_dir,
+            target_epochs=config.training.num_epochs,
             key=key,
             model=model,
             train_data=train_data,
             valid_data=valid_data,
-            num_epochs=config.training.num_epochs,
             learning_rate=config.training.learning_rate,
             batch_size=config.training.batch_size,
             num_atoms=num_atoms,
             energy_weight=config.training.energy_weight,
             forces_weight=config.training.forces_weight,
-            data_keys=("R", "Z", "F", "E", "N"),
-            name=run_name,
+            run_name=run_name,
             ckpt_dir=config.training.ckpt_root,
-            best=True,
-            save_every_epoch=resolve_save_every_epoch(config.training),
-            batch_method="default",
+            save_every_epoch=save_every,
             log_tb=config.training.log_tb,
             print_freq=config.training.print_freq,
         )
-    run_ckpt_dir = latest_run_dir(config.training.ckpt_root, run_name)
-    teacher_metrics = evaluate_test_set(
-        model=model,
-        ema_params=ema_params,
-        test_data=test_data,
-        batch_size=config.training.batch_size,
-        num_atoms=num_atoms,
-        seed=selection.seed + 1,
-        run_name=run_name,
-        split_id=config.dataset.split_id,
-        splits_dir=splits_dir,
-        run_ckpt_dir=run_ckpt_dir,
-        eval_dir=config.training.ckpt_root / f"test_eval_{run_name}",
-    )
-    teacher_train_targets, teacher_train_meta = teacher_predict_dataset(
-        model=model,
-        ema_params=ema_params,
-        dataset=train_data,
-        batch_size=config.training.batch_size,
-        num_atoms=num_atoms,
-        seed=selection.seed + 2,
-        set_name=f"Teacher train reevaluation | {run_name}",
-        convert_to_ev=config.dataset.convert_to_ev,
-    )
-    teacher_valid_targets, teacher_valid_meta = teacher_predict_dataset(
-        model=model,
-        ema_params=ema_params,
-        dataset=valid_data,
-        batch_size=config.training.batch_size,
-        num_atoms=num_atoms,
-        seed=selection.seed + 3,
-        set_name=f"Teacher valid reevaluation | {run_name}",
-        convert_to_ev=config.dataset.convert_to_ev,
-    )
-    np.savez(
-        run_output_dir / "teacher_distillation_targets.npz",
-        train_E=teacher_train_targets["E"],
-        train_F=teacher_train_targets["F"],
-        train_idx=teacher_train_targets.get("idx", np.arange(len(teacher_train_targets["E"]))),
-        valid_E=teacher_valid_targets["E"],
-        valid_F=teacher_valid_targets["F"],
-        valid_idx=teacher_valid_targets.get("idx", np.arange(len(teacher_valid_targets["E"]))),
-    )
+        run_ckpt_dir = latest_run_dir(config.training.ckpt_root, run_name)
+        teacher_metrics = evaluate_test_set(
+            model=model,
+            ema_params=ema_params,
+            test_data=test_data,
+            batch_size=config.training.batch_size,
+            num_atoms=num_atoms,
+            seed=selection.seed + 1,
+            run_name=run_name,
+            split_id=config.dataset.split_id,
+            splits_dir=splits_dir,
+            run_ckpt_dir=run_ckpt_dir,
+            eval_dir=config.training.ckpt_root / f"test_eval_{run_name}",
+        )
+        teacher_train_targets, teacher_train_meta = teacher_predict_dataset(
+            model=model,
+            ema_params=ema_params,
+            dataset=train_data,
+            batch_size=config.training.batch_size,
+            num_atoms=num_atoms,
+            seed=selection.seed + 2,
+            set_name=f"Teacher train reevaluation | {run_name}",
+            convert_to_ev=config.dataset.convert_to_ev,
+        )
+        teacher_valid_targets, teacher_valid_meta = teacher_predict_dataset(
+            model=model,
+            ema_params=ema_params,
+            dataset=valid_data,
+            batch_size=config.training.batch_size,
+            num_atoms=num_atoms,
+            seed=selection.seed + 3,
+            set_name=f"Teacher valid reevaluation | {run_name}",
+            convert_to_ev=config.dataset.convert_to_ev,
+        )
+        np.savez(
+            run_output_dir / "teacher_distillation_targets.npz",
+            train_E=teacher_train_targets["E"],
+            train_F=teacher_train_targets["F"],
+            train_idx=teacher_train_targets.get("idx", np.arange(len(teacher_train_targets["E"]))),
+            valid_E=teacher_valid_targets["E"],
+            valid_F=teacher_valid_targets["F"],
+            valid_idx=teacher_valid_targets.get("idx", np.arange(len(teacher_valid_targets["E"]))),
+        )
+        teacher_phase_result = {
+            "run_name": run_name,
+            "run_uuid": run_uuid,
+            "phase": "teacher",
+            "best_loss": float(best_loss),
+            "run_ckpt_dir": str(run_ckpt_dir) if run_ckpt_dir else None,
+            "metadata_dir": str(run_output_dir),
+            "teacher_epoch": latest_checkpoint_epoch(run_ckpt_dir),
+            "teacher": {
+                "best_loss": float(best_loss),
+                "run_ckpt_dir": str(run_ckpt_dir) if run_ckpt_dir else None,
+                "label_noise": teacher_noise_metadata,
+                "test_metrics": teacher_metrics,
+                "train_target_source": teacher_train_meta,
+                "valid_target_source": teacher_valid_meta,
+            },
+            **teacher_metrics,
+        }
+        with open(teacher_phase_done_path, "w") as f:
+            json.dump(teacher_phase_result, f, indent=2, default=str)
+        if phase == "teacher":
+            return teacher_phase_result
+    else:
+        run_ckpt_dir = latest_run_dir(config.training.ckpt_root, run_name)
+        if not is_training_complete(run_ckpt_dir, config.training.num_epochs):
+            raise ValueError(
+                f"Student phase requires completed teacher training for {run_name}; "
+                f"latest epoch {latest_checkpoint_epoch(run_ckpt_dir)} "
+                f"< target {config.training.num_epochs}"
+            )
+        ema_params, best_loss = maybe_resume_ema_params(run_ckpt_dir)
+        if ema_params is None:
+            raise ValueError(f"Teacher checkpoints exist but could not restore EMA params for {run_name}")
+        if teacher_phase_done_path.exists():
+            with open(teacher_phase_done_path) as f:
+                teacher_phase = json.load(f)
+            teacher_metrics = teacher_phase.get("teacher", {}).get("test_metrics", {})
+            best_loss = float(teacher_phase.get("best_loss", best_loss or float("nan")))
+        else:
+            teacher_metrics = {}
+        teacher_train_targets, teacher_valid_targets = load_distillation_targets(
+            run_output_dir, train_data, valid_data
+        )
+        teacher_train_meta = {"energy_source": "npz", "forces_source": "npz", "units": "eV_eV_per_A"}
+        teacher_valid_meta = dict(teacher_train_meta)
+
     student_run_name = f"{run_name}_student"
     student_key = jax.random.PRNGKey(selection.seed + 1000)
     student_model = build_model(config.student_model, data, num_atoms)
     student_ckpt_dir = latest_run_dir(config.training.ckpt_root, student_run_name)
-    student_ema_params, student_best_loss = (None, None)
-    if resume:
-        student_ema_params, student_best_loss = maybe_resume_ema_params(student_ckpt_dir)
-    if student_ema_params is None:
-        student_ema_params, student_best_loss = train_model(
-            key=student_key,
-            model=student_model,
-            train_data=teacher_train_targets,
-            valid_data=teacher_valid_targets,
-            num_epochs=config.student_epochs,
-            learning_rate=config.student_learning_rate,
-            batch_size=config.training.batch_size,
-            num_atoms=num_atoms,
-            energy_weight=config.training.energy_weight,
-            forces_weight=config.training.forces_weight,
-            data_keys=("R", "Z", "F", "E", "N"),
-            name=student_run_name,
-            ckpt_dir=config.training.ckpt_root,
-            best=True,
-            save_every_epoch=resolve_save_every_epoch(config.training),
-            batch_method="default",
-            log_tb=config.training.log_tb,
-            print_freq=config.training.print_freq,
-        )
+    student_ema_params, student_best_loss = train_or_resume_model(
+        phase_label=f"Student | {student_run_name}",
+        resume=resume,
+        run_ckpt_dir=student_ckpt_dir,
+        target_epochs=config.student_epochs,
+        key=student_key,
+        model=student_model,
+        train_data=teacher_train_targets,
+        valid_data=teacher_valid_targets,
+        learning_rate=config.student_learning_rate,
+        batch_size=config.training.batch_size,
+        num_atoms=num_atoms,
+        energy_weight=config.training.energy_weight,
+        forces_weight=config.training.forces_weight,
+        run_name=student_run_name,
+        ckpt_dir=config.training.ckpt_root,
+        save_every_epoch=save_every,
+        log_tb=config.training.log_tb,
+        print_freq=config.training.print_freq,
+    )
     student_ckpt_dir = latest_run_dir(config.training.ckpt_root, student_run_name)
     student_metrics = evaluate_test_set(
         model=student_model,

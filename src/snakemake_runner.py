@@ -16,7 +16,12 @@ from src.config import (
     default_config,
 )
 from src.experiment import load_experiment_data, train_one_experiment
-from src.shared_storage import pull_metadata_for_resume, push_metadata_to_shared
+from src.shared_storage import (
+    pull_metadata_for_resume,
+    pull_orbax_runs_for_resume,
+    push_metadata_to_shared,
+    push_orbax_runs_to_shared,
+)
 
 
 def build_selection_matrix(
@@ -140,6 +145,7 @@ def _run_selection_impl(args: argparse.Namespace) -> None:
     config = build_config_from_args(args, selection)
     config.training.ckpt_root.mkdir(parents=True, exist_ok=True)
     run_name = selection.run_name(config.molecule, config.dataset.split_id)
+    student_run_name = f"{run_name}_student"
     shared_ckpt_root = Path(args.shared_ckpt_root).resolve() if args.shared_ckpt_root else None
     if shared_ckpt_root is not None:
         shared_ckpt_root.mkdir(parents=True, exist_ok=True)
@@ -148,6 +154,18 @@ def _run_selection_impl(args: argparse.Namespace) -> None:
             shared_ckpt_root=shared_ckpt_root,
             run_name=run_name,
         )
+        if args.phase == "student":
+            pull_orbax_runs_for_resume(
+                local_ckpt_root=config.training.ckpt_root,
+                shared_ckpt_root=shared_ckpt_root,
+                run_names=(run_name, student_run_name),
+            )
+        elif args.phase == "all":
+            pull_orbax_runs_for_resume(
+                local_ckpt_root=config.training.ckpt_root,
+                shared_ckpt_root=shared_ckpt_root,
+                run_names=(run_name, student_run_name),
+            )
     data, official_train_pool_data, test_data, splits_dir, num_atoms = load_experiment_data(config)
     result = train_one_experiment(
         config=config,
@@ -158,6 +176,7 @@ def _run_selection_impl(args: argparse.Namespace) -> None:
         splits_dir=splits_dir,
         num_atoms=num_atoms,
         resume=bool(args.resume),
+        phase=args.phase,
     )
     output_path = Path(args.output_json)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -174,6 +193,24 @@ def _run_selection_impl(args: argparse.Namespace) -> None:
             shared_ckpt_root=shared_ckpt_root,
             run_name=run_name,
         )
+        if args.phase == "teacher":
+            push_orbax_runs_to_shared(
+                local_ckpt_root=config.training.ckpt_root,
+                shared_ckpt_root=shared_ckpt_root,
+                run_names=(run_name,),
+            )
+        elif args.phase == "student":
+            push_orbax_runs_to_shared(
+                local_ckpt_root=config.training.ckpt_root,
+                shared_ckpt_root=shared_ckpt_root,
+                run_names=(student_run_name,),
+            )
+        elif args.phase == "all":
+            push_orbax_runs_to_shared(
+                local_ckpt_root=config.training.ckpt_root,
+                shared_ckpt_root=shared_ckpt_root,
+                run_names=(run_name, student_run_name),
+            )
         print(f"Synced experiment_metadata/{run_name} to {shared_ckpt_root}")
 
 
@@ -244,6 +281,12 @@ def parse_args() -> argparse.Namespace:
     run_parser.add_argument("--seeds", nargs="+", type=int, required=True)
     run_parser.add_argument("--metrics", nargs="+", required=True)
     run_parser.add_argument("--resume", type=_bool_arg, default=False)
+    run_parser.add_argument(
+        "--phase",
+        choices=("all", "teacher", "student"),
+        default="all",
+        help="Training phase: teacher-only, student-only (requires teacher artifacts), or both.",
+    )
     run_parser.add_argument(
         "--teacher-noise-scale",
         type=float,

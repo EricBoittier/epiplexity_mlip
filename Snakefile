@@ -78,7 +78,108 @@ rule all:
         AGG_JSON
 
 
-rule run_selection:
+rule run_teacher:
+    output:
+        teacher_done=f"{SHARED_CKPT_ROOT}/experiment_metadata/{{run_name}}/teacher_phase_done.json",
+        done=f"{DONE_DIR}/{{run_name}}.teacher.done",
+    params:
+        selection_name=lambda wc: RUN_TO_META[wc.run_name]["selection_name"],
+        split_id=lambda wc: RUN_TO_META[wc.run_name]["split_id"],
+        molecule=config["molecule"],
+        data_path=config["dataset"]["data_path"],
+        splits_dir=config["dataset"]["splits_dir"],
+        ckpt_root=LOCAL_CKPT_ROOT,
+        num_epochs=config["training"]["num_epochs"],
+        batch_size=config["training"]["batch_size"],
+        learning_rate=config["training"]["learning_rate"],
+        n_train=config["training"]["n_train"],
+        n_valid=config["training"]["n_valid"],
+        energy_weight=config["training"]["energy_weight"],
+        forces_weight=config["training"]["forces_weight"],
+        save_every_epoch=config["training"]["save_every_epoch"],
+        teacher_cutoff=config.get("model", {}).get("cutoff", 10.0),
+        log_tb=config["training"]["log_tb"],
+        print_freq=config["training"]["print_freq"],
+        student_epochs=config["student"]["epochs"],
+        student_learning_rate=config["student"]["learning_rate"],
+        student_features=config["student"]["model"]["features"],
+        student_max_degree=config["student"]["model"]["max_degree"],
+        student_num_iterations=config["student"]["model"]["num_iterations"],
+        student_num_basis_functions=config["student"]["model"]["num_basis_functions"],
+        student_cutoff=config["student"]["model"]["cutoff"],
+        student_charges=config["student"]["model"]["charges"],
+        student_zbl=config["student"]["model"]["zbl"],
+        window_size=config["selection_matrix"]["window_size"],
+        stride=config["selection_matrix"]["stride"],
+        train_fraction=config["selection_matrix"]["train_fraction"],
+        seeds=" ".join(str(x) for x in config["selection_matrix"]["seeds"]),
+        metrics=" ".join(config["selection_matrix"]["metrics"]),
+        convert_to_ev=config["dataset"]["convert_to_ev"],
+        python_bin=PYTHON_BIN,
+        resume=RESUME,
+        shared_ckpt_cmd=SHARED_CKPT_CMD,
+        teacher_noise_scale=lambda wc: RUN_TO_META[wc.run_name]["teacher_noise_scale"],
+        teacher_noise_suffix_cmd=lambda wc: (
+            f"--teacher-noise-suffix {RUN_TO_META[wc.run_name]['teacher_noise_suffix']}"
+            if RUN_TO_META[wc.run_name]["teacher_noise_suffix"]
+            else ""
+        ),
+        save_every_n_epochs_cmd=lambda wc: (
+            f"--save-every-n-epochs {int(config['training']['save_every_n_epochs'])}"
+            if config["training"].get("save_every_n_epochs") not in (None, "", False)
+            else ""
+        ),
+    wildcard_constraints:
+        run_name="|".join(RUN_NAMES),
+    shell:
+        (
+            "{params.python_bin} -m src.snakemake_runner run-selection "
+            "--selection-name {params.selection_name} "
+            "--output-json {output.teacher_done} "
+            "--done-file {output.done} "
+            "--phase teacher "
+            "--molecule {params.molecule} "
+            "--data-path {params.data_path} "
+            "--splits-dir '{params.splits_dir}' "
+            "--split-id {params.split_id} "
+            "--ckpt-root {params.ckpt_root} "
+            "{params.shared_ckpt_cmd} "
+            "--num-epochs {params.num_epochs} "
+            "--batch-size {params.batch_size} "
+            "--learning-rate {params.learning_rate} "
+            "--n-train {params.n_train} "
+            "--n-valid {params.n_valid} "
+            "--energy-weight {params.energy_weight} "
+            "--forces-weight {params.forces_weight} "
+            "--save-every-epoch {params.save_every_epoch} "
+            "{params.save_every_n_epochs_cmd} "
+            "--teacher-cutoff {params.teacher_cutoff} "
+            "--log-tb {params.log_tb} "
+            "--print-freq {params.print_freq} "
+            "--student-epochs {params.student_epochs} "
+            "--student-learning-rate {params.student_learning_rate} "
+            "--student-features {params.student_features} "
+            "--student-max-degree {params.student_max_degree} "
+            "--student-num-iterations {params.student_num_iterations} "
+            "--student-num-basis-functions {params.student_num_basis_functions} "
+            "--student-cutoff {params.student_cutoff} "
+            "--student-charges {params.student_charges} "
+            "--student-zbl {params.student_zbl} "
+            "--convert-to-ev {params.convert_to_ev} "
+            "--window-size {params.window_size} "
+            "--stride {params.stride} "
+            "--train-fraction {params.train_fraction} "
+            "--seeds {params.seeds} "
+            "--metrics {params.metrics} "
+            "--resume {params.resume} "
+            "--teacher-noise-scale {params.teacher_noise_scale} "
+            "{params.teacher_noise_suffix_cmd}"
+        )
+
+
+rule run_student:
+    input:
+        teacher_done=f"{SHARED_CKPT_ROOT}/experiment_metadata/{{run_name}}/teacher_phase_done.json",
     output:
         result_json=f"{SHARED_CKPT_ROOT}/experiment_metadata/{{run_name}}/result_summary.json",
         done=f"{DONE_DIR}/{{run_name}}.done",
@@ -137,6 +238,7 @@ rule run_selection:
             "--selection-name {params.selection_name} "
             "--output-json {output.result_json} "
             "--done-file {output.done} "
+            "--phase student "
             "--molecule {params.molecule} "
             "--data-path {params.data_path} "
             "--splits-dir '{params.splits_dir}' "

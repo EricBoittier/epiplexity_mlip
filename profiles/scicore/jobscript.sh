@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=GPU_JOB
-#SBATCH --time=03:00:00
+#SBATCH --time=06:00:00
 #SBATCH --qos=rtx4090-6hours
 #SBATCH --mem-per-cpu=20G
 #SBATCH --ntasks=1
