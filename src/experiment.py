@@ -777,8 +777,9 @@ def train_one_experiment(
     num_atoms: int,
     resume: bool = False,
     phase: TrainingPhase = "all",
+    run_name: str | None = None,
 ) -> dict[str, Any]:
-    run_name = selection.run_name(config.molecule, config.dataset.split_id)
+    run_name = run_name or selection.run_name(config.molecule, config.dataset.split_id)
     run_output_dir = config.training.ckpt_root / "experiment_metadata" / run_name
     run_output_dir.mkdir(parents=True, exist_ok=True)
     result_summary_path = run_output_dir / "result_summary.json"

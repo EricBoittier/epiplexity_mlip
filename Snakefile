@@ -140,6 +140,7 @@ rule run_teacher:
         (
             "{params.python_bin} -m src.snakemake_runner run-selection "
             "--selection-name {params.selection_name} "
+            "--run-name {wildcards.run_name} "
             "--output-json {output.teacher_done} "
             "--done-file {output.done} "
             "--phase teacher "
@@ -243,6 +244,7 @@ rule run_student:
         (
             "{params.python_bin} -m src.snakemake_runner run-selection "
             "--selection-name {params.selection_name} "
+            "--run-name {wildcards.run_name} "
             "--output-json {output.result_json} "
             "--done-file {output.done} "
             "--phase student "

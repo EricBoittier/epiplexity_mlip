@@ -147,7 +147,8 @@ def _run_selection_impl(args: argparse.Namespace) -> None:
     selection = by_name[args.selection_name]
     config = build_config_from_args(args, selection)
     config.training.ckpt_root.mkdir(parents=True, exist_ok=True)
-    run_name = selection.run_name(config.molecule, config.dataset.split_id)
+    run_name = args.run_name.strip() if args.run_name else ""
+    run_name = run_name or selection.run_name(config.molecule, config.dataset.split_id)
     student_run_name = f"{run_name}_student"
     shared_ckpt_root = Path(args.shared_ckpt_root).resolve() if args.shared_ckpt_root else None
     if shared_ckpt_root is not None:
@@ -186,6 +187,7 @@ def _run_selection_impl(args: argparse.Namespace) -> None:
         num_atoms=num_atoms,
         resume=bool(args.resume),
         phase=args.phase,
+        run_name=run_name,
     )
     output_path = Path(args.output_json)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -240,6 +242,11 @@ def parse_args() -> argparse.Namespace:
 
     run_parser = subparsers.add_parser("run-selection")
     run_parser.add_argument("--selection-name", required=True)
+    run_parser.add_argument(
+        "--run-name",
+        default="",
+        help="Full Snakemake run name (includes teacher_noise suffix when applicable).",
+    )
     run_parser.add_argument("--output-json", required=True)
     run_parser.add_argument("--done-file", required=True)
 
