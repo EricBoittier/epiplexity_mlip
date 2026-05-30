@@ -35,6 +35,24 @@ Or explicitly: `/scicore/home/meuwly/boitti0000/mmml/.venv/bin/python -m src.plo
 
 Figures are written to `checkpoints/rmd17_aspirin/plots/` (force RMSE, KL divergences, sample force histograms, plus a CSV summary).
 
+### Dataset analysis (official splits, KL, pair distances, gzip)
+
+Read-only plots over **official RMD17 train pool and test** per split (no checkpoints). Produces energy/force overviews, KL heatmaps (energy, |F|, element-pair distances), and gzip window metrics from `scan_information_content`.
+
+```bash
+# (mmml) from repo root:
+python -m src.plot_dataset_analysis \
+  --data-path /scicore/home/meuwly/boitti0000/data/rmd17/npz_data/rmd17_aspirin.npz \
+  --splits-dir "" \
+  --split-ids 1 2 3 4 5 \
+  --output-dir ~/epiplexity_storage/rmd17_aspirin_dataset_plots \
+  --window-size 10 --stride 10
+```
+
+Or: `make plot-dataset` (override `DATASET_PLOTS_DIR`, `DATASET_DATA_PATH` as needed).
+
+Outputs under `output-dir`: `overview/`, `kl/`, `gzip/`, `tables/` (CSV + `split##_info_df.pkl`).
+
 Useful commands:
 - Run one target only (example):
   - `snakemake checkpoints/rmd17_aspirin/experiment_results.json -j 1`
