@@ -584,7 +584,11 @@ def _normalize_resume_signature(signature: dict[str, Any]) -> dict[str, Any]:
 
 
 def _resume_signatures_match(existing: dict[str, Any], current: dict[str, Any]) -> bool:
-    return _normalize_resume_signature(existing) == current
+    existing_norm = _normalize_resume_signature(existing)
+    current_norm = dict(current)
+    if existing_norm.get("run_name") is None:
+        current_norm.pop("run_name", None)
+    return existing_norm == current_norm
 
 
 def _format_resume_signature_diff(existing: dict[str, Any], current: dict[str, Any]) -> str:
@@ -593,6 +597,53 @@ def _format_resume_signature_diff(existing: dict[str, Any], current: dict[str, A
     diff = difflib.unified_diff(stored, live, fromfile="stored resume_signature.json", tofile="current run", lineterm="")
     text = "\n".join(diff)
     return text if text else "(no diff lines produced; compare normalized payloads manually)"
+
+
+def _resume_metadata_is_compatible(
+    *,
+    run_name: str,
+    existing_signature: dict[str, Any],
+    current_signature: dict[str, Any],
+) -> bool:
+    stored_run_name = existing_signature.get("run_name")
+    if stored_run_name is not None and stored_run_name != run_name:
+        return False
+    return _resume_signatures_match(existing_signature, current_signature)
+
+
+def _clear_stale_resume_artifacts(run_output_dir: Path) -> None:
+    for name in (TEACHER_PHASE_DONE_FILENAME, "result_summary.json", "resume_signature.json"):
+        path = run_output_dir / name
+        if path.exists():
+            path.unlink()
+            print(f"Removed stale resume artifact: {path}")
+
+
+def _validate_resume_metadata_or_reset(
+    *,
+    resume: bool,
+    run_name: str,
+    run_output_dir: Path,
+    current_signature: dict[str, Any],
+) -> None:
+    if not resume:
+        return
+    resume_signature_path = run_output_dir / "resume_signature.json"
+    if not resume_signature_path.exists():
+        return
+    with open(resume_signature_path) as f:
+        existing_signature = json.load(f)
+    if _resume_metadata_is_compatible(
+        run_name=run_name,
+        existing_signature=existing_signature,
+        current_signature=current_signature,
+    ):
+        return
+    print(
+        f"WARNING [{run_name}]: resume metadata does not match this job "
+        f"(stored run_name={existing_signature.get('run_name')!r}); clearing stale artifacts."
+    )
+    _clear_stale_resume_artifacts(run_output_dir)
 
 
 def _raise_resume_signature_mismatch(existing: dict[str, Any], current: dict[str, Any]) -> None:
@@ -609,11 +660,13 @@ def _resume_signature(
     config: ExperimentConfig,
     selection: SelectionConfig,
     num_atoms: int,
+    run_name: str,
 ) -> dict[str, Any]:
     training = asdict(config.training)
     training.pop("ckpt_root", None)
     return _normalize_resume_signature(
         {
+            "run_name": run_name,
             "molecule": config.molecule,
             "dataset": {
                 "data_path": _signature_path(config.dataset.data_path),
@@ -789,12 +842,23 @@ def train_one_experiment(
         config=config,
         selection=selection,
         num_atoms=num_atoms,
+        run_name=run_name,
+    )
+    _validate_resume_metadata_or_reset(
+        resume=resume,
+        run_name=run_name,
+        run_output_dir=run_output_dir,
+        current_signature=current_signature,
     )
     if resume and phase == "teacher" and teacher_phase_done_path.exists():
         if resume_signature_path.exists():
             with open(resume_signature_path) as f:
                 existing_signature = json.load(f)
-            if not _resume_signatures_match(existing_signature, current_signature):
+            if not _resume_metadata_is_compatible(
+                run_name=run_name,
+                existing_signature=existing_signature,
+                current_signature=current_signature,
+            ):
                 _raise_resume_signature_mismatch(existing_signature, current_signature)
         with open(teacher_phase_done_path) as f:
             return json.load(f)
@@ -808,7 +872,11 @@ def train_one_experiment(
             if resume_signature_path.exists():
                 with open(resume_signature_path) as f:
                     existing_signature = json.load(f)
-                if not _resume_signatures_match(existing_signature, current_signature):
+                if not _resume_metadata_is_compatible(
+                    run_name=run_name,
+                    existing_signature=existing_signature,
+                    current_signature=current_signature,
+                ):
                     _raise_resume_signature_mismatch(existing_signature, current_signature)
             with open(result_summary_path) as f:
                 return json.load(f)
@@ -834,7 +902,11 @@ def train_one_experiment(
     if resume and resume_signature_path.exists():
         with open(resume_signature_path) as f:
             existing_signature = json.load(f)
-        if not _resume_signatures_match(existing_signature, current_signature):
+        if not _resume_metadata_is_compatible(
+            run_name=run_name,
+            existing_signature=existing_signature,
+            current_signature=current_signature,
+        ):
             _raise_resume_signature_mismatch(existing_signature, current_signature)
     with open(resume_signature_path, "w") as f:
         json.dump(current_signature, f, indent=2)
