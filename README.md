@@ -90,7 +90,7 @@ cd ~/epiplexity
 python -m pip install -r requirements-snakemake.txt
 
 snakemake --profile profiles/scicore -n
-snakemake --profile profiles/scicore -j 16
+snakemake --profile profiles/scicore -j 40
 ```
 
 Another config (example):
@@ -112,7 +112,7 @@ mkdir -p /tmp/epiplexity_mlip/rmd17_aspirin_splits1_5/checkpoints
 mkdir -p ~/epiplexity_storage/rmd17_aspirin_splits1_5/checkpoints
 cd ~/epiplexity
 export TMPDIR=/tmp
-snakemake --profile profiles/scicore --configfile config/experiments_splits1_5_scicore.yaml -j 4
+snakemake --profile profiles/scicore --configfile config/experiments_splits1_5_scicore.yaml -j 40
 ```
 
 Legacy lab-storage helper (symlinks `.snakemake/` only):

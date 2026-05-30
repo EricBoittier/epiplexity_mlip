@@ -2,10 +2,14 @@ configfile: "config/experiments.yaml"
 
 
 def selection_names():
-    seeds = config["selection_matrix"]["seeds"]
-    metrics = config["selection_matrix"]["metrics"]
-    window_size = config["selection_matrix"]["window_size"]
-    names = [f"random_seed{seed}" for seed in seeds]
+    sel_cfg = config["selection_matrix"]
+    seeds = sel_cfg["seeds"]
+    metrics = sel_cfg["metrics"]
+    window_size = sel_cfg["window_size"]
+    include_random_split = sel_cfg.get("include_random_split", True)
+    names = []
+    if include_random_split:
+        names.extend([f"random_seed{seed}" for seed in seeds])
     for seed in seeds:
         for metric in metrics:
             names.append(f"{metric}_ws{window_size}_seed{seed}")
@@ -114,6 +118,7 @@ rule run_teacher:
         train_fraction=config["selection_matrix"]["train_fraction"],
         seeds=" ".join(str(x) for x in config["selection_matrix"]["seeds"]),
         metrics=" ".join(config["selection_matrix"]["metrics"]),
+        include_random_split=config["selection_matrix"].get("include_random_split", True),
         convert_to_ev=config["dataset"]["convert_to_ev"],
         python_bin=PYTHON_BIN,
         resume=RESUME,
@@ -171,6 +176,7 @@ rule run_teacher:
             "--train-fraction {params.train_fraction} "
             "--seeds {params.seeds} "
             "--metrics {params.metrics} "
+            "--include-random-split {params.include_random_split} "
             "--resume {params.resume} "
             "--teacher-noise-scale {params.teacher_noise_scale} "
             "{params.teacher_noise_suffix_cmd}"
@@ -215,6 +221,7 @@ rule run_student:
         train_fraction=config["selection_matrix"]["train_fraction"],
         seeds=" ".join(str(x) for x in config["selection_matrix"]["seeds"]),
         metrics=" ".join(config["selection_matrix"]["metrics"]),
+        include_random_split=config["selection_matrix"].get("include_random_split", True),
         convert_to_ev=config["dataset"]["convert_to_ev"],
         python_bin=PYTHON_BIN,
         resume=RESUME,
@@ -272,6 +279,7 @@ rule run_student:
             "--train-fraction {params.train_fraction} "
             "--seeds {params.seeds} "
             "--metrics {params.metrics} "
+            "--include-random-split {params.include_random_split} "
             "--resume {params.resume} "
             "--teacher-noise-scale {params.teacher_noise_scale} "
             "{params.teacher_noise_suffix_cmd}"

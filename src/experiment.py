@@ -161,13 +161,18 @@ def make_information_split(
     *,
     metric: str,
     train_fraction: float,
+    seed: int | None = None,
 ) -> tuple[np.ndarray, np.ndarray, pd.DataFrame, pd.DataFrame]:
     """Select highest-information windows for training and remaining windows for validation."""
-    if metric not in info_df.columns:
+    if metric == "random":
+        if seed is None:
+            raise ValueError("random window ranking requires seed")
+        ranked = info_df.sample(frac=1.0, random_state=seed).reset_index(drop=True)
+    elif metric not in info_df.columns:
         available = ", ".join(map(str, info_df.columns))
         raise ValueError(f"Metric {metric!r} not found in info_df. Available columns: {available}")
-
-    ranked = info_df.sort_values(metric, ascending=False).reset_index(drop=True)
+    else:
+        ranked = info_df.sort_values(metric, ascending=False).reset_index(drop=True)
     n_train_windows = max(1, round(train_fraction * len(ranked)))
     train_windows = ranked.iloc[:n_train_windows]
     valid_windows = ranked.iloc[n_train_windows:]
@@ -231,6 +236,7 @@ def make_selected_data(
             info_df,
             metric=selection.metric,
             train_fraction=selection_train_fraction,
+            seed=selection.seed,
         )
         metadata["info_df"] = info_df
         metadata["train_windows"] = train_windows

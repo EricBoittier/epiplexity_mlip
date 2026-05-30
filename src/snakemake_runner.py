@@ -31,16 +31,18 @@ def build_selection_matrix(
     window_size: int,
     stride: int,
     train_fraction: float,
+    include_random_split: bool = False,
 ) -> list[SelectionConfig]:
     selections: list[SelectionConfig] = []
-    for seed in seeds:
-        selections.append(
-            SelectionConfig(
-                name=f"random_seed{seed}",
-                kind="random",
-                seed=seed,
+    if include_random_split:
+        for seed in seeds:
+            selections.append(
+                SelectionConfig(
+                    name=f"random_seed{seed}",
+                    kind="random",
+                    seed=seed,
+                )
             )
-        )
     for seed in seeds:
         for metric in metrics:
             selections.append(
@@ -136,6 +138,7 @@ def _run_selection_impl(args: argparse.Namespace) -> None:
         window_size=args.window_size,
         stride=args.stride,
         train_fraction=args.train_fraction,
+        include_random_split=bool(args.include_random_split),
     )
     by_name = {s.name: s for s in selections}
     if args.selection_name not in by_name:
@@ -286,6 +289,12 @@ def parse_args() -> argparse.Namespace:
     run_parser.add_argument("--train-fraction", type=float, default=0.95)
     run_parser.add_argument("--seeds", nargs="+", type=int, required=True)
     run_parser.add_argument("--metrics", nargs="+", required=True)
+    run_parser.add_argument(
+        "--include-random-split",
+        type=_bool_arg,
+        default=False,
+        help="If true, add structure-level random_seed selections (in addition to metrics).",
+    )
     run_parser.add_argument("--resume", type=_bool_arg, default=False)
     run_parser.add_argument(
         "--phase",

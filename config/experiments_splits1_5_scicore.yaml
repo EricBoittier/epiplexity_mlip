@@ -5,10 +5,10 @@
 #   mkdir -p "${SCICORE_LAB_ROOT}/checkpoints"
 #   bash scripts/scicore_use_lab_storage.sh && source .scicore_lab_env
 #   cd ~/epiplexity && export TMPDIR=/tmp
-#   snakemake --profile profiles/scicore --configfile "${GENERATED_CONFIG}" -j 4
+#   snakemake --profile profiles/scicore --configfile "${GENERATED_CONFIG}" -j 40
 #
-# Each job copies experiment_metadata/<run_name>/ and writes .done + result_summary.json
-# under outputs.shared_ckpt_root when training finishes.
+# Matrix: splits 1–5 only (no seed sweep). Window metrics share ws/stride; "random"
+# shuffles the same sliding windows. Baseline + teacher_noise variant per selection.
 
 molecule: rmd17_aspirin
 
@@ -53,8 +53,9 @@ student:
     zbl: false
 
 selection_matrix:
-  seeds: [42, 43, 44]
-  metrics: [gzip_bytes_cart, gzip_bytes_zmat, gzip_bytes_soap]
+  seeds: [42]
+  include_random_split: false
+  metrics: [random, gzip_bytes_cart, gzip_bytes_zmat, gzip_bytes_soap]
   window_size: 10
   stride: 10
   train_fraction: 0.5
@@ -65,6 +66,6 @@ outputs:
   snakemake_done_dir: __SCICORE_LAB_ROOT__/checkpoints/snakemake_done
 
 teacher_noise:
-  enabled: false
-  scale: 0.0
+  enabled: true
+  scale: 1.0
   run_suffix: teacher_noise

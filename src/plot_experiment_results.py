@@ -124,7 +124,7 @@ def results_to_dataframe(results: list[dict[str, Any]]) -> pd.DataFrame:
 
 def _selection_label(selection: str) -> str:
     labels = {
-        "random": "Random",
+        "random": "Random windows",
         "gzip_bytes_cart": "gzip(cart)",
         "gzip_bytes_zmat": "gzip(zmat)",
         "gzip_bytes_soap": "gzip(soap)",
