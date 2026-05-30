@@ -80,26 +80,6 @@ This repository includes a Snakemake profile at `profiles/scicore/` with Slurm h
 - `--partition=rtx4090`
 - `--gres=gpu:1`
 
-Run from `~/epiplexity` with the **mmml** environment (do not use `epiplexity/.venv` on the cluster — it is often broken on login nodes):
-
-```bash
-conda activate mmml   # or: source /scicore/home/meuwly/boitti0000/mmml/.venv/bin/activate
-cd ~/epiplexity
-
-# optional: install snakemake into mmml once
-python -m pip install -r requirements-snakemake.txt
-
-snakemake --profile profiles/scicore -n
-snakemake --profile profiles/scicore -j 40
-```
-
-Another config (example):
-
-```bash
-snakemake --profile profiles/scicore --configfile config/experiments_splits1_5.yaml
-```
-
-Use `--configfile`, not `--config`.
 
 ### Storage on SciCORE (use group share, not `$HOME`)
 
