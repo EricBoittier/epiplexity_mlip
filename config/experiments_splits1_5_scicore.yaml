@@ -29,7 +29,7 @@ model:
 training:
   ckpt_root: /tmp/epiplexity_mlip/rmd17_aspirin_splits1_5_1to1/checkpoints
   num_epochs: 1000
-  batch_size: 50
+  batch_size: 10
   learning_rate: 0.001
   n_train: 500
   n_valid: 500
