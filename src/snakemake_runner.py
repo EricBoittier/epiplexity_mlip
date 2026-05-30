@@ -17,10 +17,10 @@ from src.config import (
 )
 from src.experiment import load_experiment_data, train_one_experiment
 from src.shared_storage import (
+    pull_latest_checkpoints_for_resume,
     pull_metadata_for_resume,
-    pull_orbax_runs_for_resume,
+    push_latest_checkpoints_to_shared,
     push_metadata_to_shared,
-    push_orbax_runs_to_shared,
 )
 
 
@@ -154,14 +154,20 @@ def _run_selection_impl(args: argparse.Namespace) -> None:
             shared_ckpt_root=shared_ckpt_root,
             run_name=run_name,
         )
-        if args.phase == "student":
-            pull_orbax_runs_for_resume(
+        if args.phase == "teacher":
+            pull_latest_checkpoints_for_resume(
+                local_ckpt_root=config.training.ckpt_root,
+                shared_ckpt_root=shared_ckpt_root,
+                run_names=(run_name,),
+            )
+        elif args.phase == "student":
+            pull_latest_checkpoints_for_resume(
                 local_ckpt_root=config.training.ckpt_root,
                 shared_ckpt_root=shared_ckpt_root,
                 run_names=(run_name, student_run_name),
             )
         elif args.phase == "all":
-            pull_orbax_runs_for_resume(
+            pull_latest_checkpoints_for_resume(
                 local_ckpt_root=config.training.ckpt_root,
                 shared_ckpt_root=shared_ckpt_root,
                 run_names=(run_name, student_run_name),
@@ -194,19 +200,19 @@ def _run_selection_impl(args: argparse.Namespace) -> None:
             run_name=run_name,
         )
         if args.phase == "teacher":
-            push_orbax_runs_to_shared(
+            push_latest_checkpoints_to_shared(
                 local_ckpt_root=config.training.ckpt_root,
                 shared_ckpt_root=shared_ckpt_root,
                 run_names=(run_name,),
             )
         elif args.phase == "student":
-            push_orbax_runs_to_shared(
+            push_latest_checkpoints_to_shared(
                 local_ckpt_root=config.training.ckpt_root,
                 shared_ckpt_root=shared_ckpt_root,
-                run_names=(student_run_name,),
+                run_names=(run_name, student_run_name),
             )
         elif args.phase == "all":
-            push_orbax_runs_to_shared(
+            push_latest_checkpoints_to_shared(
                 local_ckpt_root=config.training.ckpt_root,
                 shared_ckpt_root=shared_ckpt_root,
                 run_names=(run_name, student_run_name),
